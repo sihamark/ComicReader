@@ -24,7 +24,7 @@ fun Root() {
     ComicReaderTheme {
         val model: RootViewModel = viewModel()
         LaunchedEffect(model) {
-            model.loadInitialPage()
+            model.loadPage()
         }
         Scaffold { innerPadding ->
             Box(
@@ -44,7 +44,7 @@ fun Root() {
                     }
 
                     is RootViewModel.State.Loaded ->
-                        Surface(onClick = { model.loadNextPage(state.page) }) {
+                        Surface(onClick = { model.loadPage(state.page) }) {
                             AsyncImage(
                                 model = state.page.imageUrl,
                                 contentDescription = null

@@ -16,28 +16,19 @@ class RootViewModel : ViewModel() {
     var state: State by mutableStateOf(State.Loading)
         private set
 
-    fun loadInitialPage() {
-        viewModelScope.launch {
-            state = try {
-                val page = repository.loadPage()
-                State.Loaded(page)
-            } catch (e: Exception) {
-                Napier.e("error loading initial page", e)
-                State.Error(e)
-
-            }
-        }
-    }
-
     fun reloadCurrentPage() {
         TODO("Not yet implemented")
     }
 
-    fun loadNextPage(page: Page) {
+    fun loadPage(page: Page? = null) {
         viewModelScope.launch {
             state = State.Loading
             state = try {
-                val nextPage = repository.loadPage(page.nextPageUrl)
+                val nextPage = if (page == null) {
+                    repository.loadPage()
+                } else {
+                    repository.loadPage(page.nextPageUrl)
+                }
                 State.Loaded(nextPage)
             } catch (e: Exception) {
                 Napier.e("error loading initial page", e)
