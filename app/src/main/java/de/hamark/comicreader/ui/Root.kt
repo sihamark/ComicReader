@@ -14,8 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import de.hamark.comicreader.ui.theme.ComicReaderTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,7 +48,10 @@ fun Root() {
                     is RootViewModel.State.Loaded ->
                         Surface(onClick = { model.loadPage(state.page) }) {
                             AsyncImage(
-                                model = state.page.imageUrl,
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(state.page.imageUrl)
+                                    .crossfade(true)
+                                    .build(),
                                 contentDescription = null
                             )
                         }
