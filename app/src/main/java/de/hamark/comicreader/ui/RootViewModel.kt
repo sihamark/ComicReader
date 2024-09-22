@@ -5,13 +5,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import de.hamark.comicreader.model.ComicRepository
 import de.hamark.comicreader.model.PageParseController.Page
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class RootViewModel : ViewModel() {
-    private val repository: ComicRepository = ComicRepository()
+@HiltViewModel
+class RootViewModel @Inject constructor(
+    private val repository: ComicRepository
+) : ViewModel() {
 
     var state: State by mutableStateOf(State.Loading)
         private set
@@ -28,12 +32,14 @@ class RootViewModel : ViewModel() {
             try {
                 state = State.Loading
                 state = try {
-                    val nextPage = if (page == null) {
-                        repository.loadPage()
-                    } else {
-                        repository.loadPage(page.nextPageUrl)
-                    }
-                    State.Loaded(nextPage)
+                    repository.loadComic()
+//                    val nextPage = if (page == null) {
+//                        repository.loadPage()
+//                    } else {
+//                        repository.loadPage(page.nextPageUrl)
+//                    }
+//                    State.Loaded(nextPage)
+                    TODO("not yet implemented")
                 } catch (e: Exception) {
                     Napier.e("error loading initial page", e)
                     State.Error(e)
