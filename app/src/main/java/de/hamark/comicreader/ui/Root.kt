@@ -37,7 +37,7 @@ fun Root() {
             ) {
                 when (val state = model.state) {
                     is RootViewModel.State.Error -> {
-                        Column {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = "Error loading page")
                             Button(onClick = { model.reloadCurrentPage() }) {
                                 Text(text = "Retry")
