@@ -1,11 +1,11 @@
 package de.hamark.comicreader.model
 
+import com.fleeksoft.ksoup.Ksoup
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import org.jsoup.Jsoup
 import javax.inject.Inject
 
 class ComicRepository @Inject constructor(
@@ -14,47 +14,57 @@ class ComicRepository @Inject constructor(
 
     suspend fun loadComic(url: String = DEFAULT_COMIC_URL): Comic {
         val content = httpClient.get(url).body<String>()
-        val document = Jsoup.parse(content)
+        val document = Ksoup.parse(content)
+        val comicTitle = document.select("head meta[property=og:title]").attr("content")
         val chapterListElements = document.select("ul.chapter_list > li")
         Napier.e { "got ${chapterListElements.count()} chapters" }
-        val chapters = chapterListElements.reversed().mapIndexed { chapterIndex, chapter ->
-            val link = chapter.select("a")
-            val chapterName = link.text()
-            val chapterUrl = URLBuilder(url).apply {
-                path()
-                appendPathSegments(link.attr("href"))
-            }.buildString()
-            val pages = loadPages(chapterUrl)
-            Napier.e { "chapter $chapterIndex $chapterName, url: $chapterUrl, pages: ${pages.size}" }
-            Chapter(chapterName, chapterUrl, pages)
-        }
-        Napier.e { "chapters: $chapters" }
-        TODO("not yet implemented")
+        val chapters = chapterListElements.reversed()
+            .map { chapter ->
+                val link = chapter.select("a")
+                val chapterName = link.text()
+                val chapterUrl = URLBuilder(url).apply {
+                    path()
+                    appendPathSegments(link.attr("href"))
+                }.buildString()
+                Chapter(chapterName, chapterUrl)
+            }
+        Napier.e { "chapters: ${chapters.size}" }
+        return Comic(
+            title = comicTitle,
+            homeUrl = url,
+            chapters = chapters
+        )
     }
+
+    suspend fun loadPage(chapterUrl: String, page: Int): Page? {
+        val pageUrl = getPageUrl(chapterUrl, page)
+        val response = httpClient.get(pageUrl)
+        if (response.status == HttpStatusCode.NotFound) {
+            return null
+        }
+        val pageDocument = Ksoup.parse(response.body<String>())
+        val imageUrl = pageDocument.select("div#viewer img").attr("src")
+
+        Napier.e { "page url: $pageUrl image url: $imageUrl" }
+
+        return Page(imageUrl)
+    }
+
+    fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
+        appendPathSegments("${page + 1}.html")
+    }.buildString()
 
     private suspend fun loadPages(
         chapterUrl: String,
     ): List<Page> {
-        suspend fun loadPage(page: Int): Page? {
-            val pageUrl = URLBuilder(chapterUrl).apply {
-                appendPathSegments("${page}.html")
-            }.buildString()
-            val response = httpClient.get(pageUrl)
-            if (response.status == HttpStatusCode.NotFound) {
-                return null
-            }
-            val pageDocument = Jsoup.parse(response.body<String>())
-            val imageUrl = pageDocument.select("div#viewer img").attr("src")
-            return Page(imageUrl)
-        }
 
         var currentPage = 1
         val pages = mutableListOf<Page>()
-        var page: Page? = loadPage(currentPage)
+        var page: Page? = loadPage(chapterUrl, currentPage)
 
         while (page != null) {
             pages.add(page)
-            page = loadPage(++currentPage)
+            page = loadPage(chapterUrl, ++currentPage)
         }
 
         return pages
@@ -68,12 +78,11 @@ class ComicRepository @Inject constructor(
 
     data class Chapter(
         val title: String,
-        val url: String,
-        val pages: List<Page>
+        val url: String
     )
 
     data class Page(
-        val imageUrl: String
+        val imageUrl: String,
     )
 
     companion object {

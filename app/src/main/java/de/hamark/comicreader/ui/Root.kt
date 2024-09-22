@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,7 +19,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import de.hamark.comicreader.ui.theme.ComicReaderTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Root() {
     ComicReaderTheme {
@@ -46,14 +44,17 @@ fun Root() {
                     }
 
                     is RootViewModel.State.Loaded ->
-                        Surface(onClick = { model.loadPage(state.page) }) {
+                        Surface(onClick = { model.loadPage() }) {
                             AsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
-                                    .data(state.page.imageUrl)
-                                    .crossfade(true)
+                                    .data(state.imageUrl)
                                     .build(),
-                                contentDescription = null
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize()
                             )
+//                            AndroidView(::WebView) { webView ->
+//                                webView.loadUrl(state.imageUrl)
+//                            }
                         }
 
                     RootViewModel.State.Loading -> CircularProgressIndicator()

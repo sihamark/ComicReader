@@ -72,7 +72,7 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
 
-    implementation(libs.jsoup)
+    implementation(libs.ksoup)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)

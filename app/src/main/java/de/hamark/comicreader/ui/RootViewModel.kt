@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.hamark.comicreader.model.ComicRepository
-import de.hamark.comicreader.model.PageParseController.Page
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,24 +21,29 @@ class RootViewModel @Inject constructor(
 
     fun reloadCurrentPage() {
         when (val state = state) {
-            is State.Loaded -> loadPage(state.page)
+            is State.Loaded -> loadPage(state.chapter, state.pageIndex)
             else -> loadPage()
         }
     }
 
-    fun loadPage(page: Page? = null) {
+    fun loadPage(chapter: ComicRepository.Chapter? = null, index: Int = 0) {
         viewModelScope.launch {
             try {
                 state = State.Loading
                 state = try {
-                    repository.loadComic()
-//                    val nextPage = if (page == null) {
-//                        repository.loadPage()
-//                    } else {
-//                        repository.loadPage(page.nextPageUrl)
-//                    }
-//                    State.Loaded(nextPage)
-                    TODO("not yet implemented")
+                    val comic = repository.loadComic()
+
+                    val actualChapter = chapter ?: comic.chapters.first()
+//                    val page = repository.loadPage(actualChapter.url, index)
+//                        ?: error("page not found")
+//
+//                    val bitmap = BitmapFactory
+//                        .decodeByteArray(page.imageBytes, 0, page.imageBytes.size)
+//                        .asImageBitmap()
+                    val pageUrl = repository.getPageUrl(actualChapter.url, index)
+                    val imageUrl = repository.loadPage(actualChapter.url, index)
+                        ?: error("page not found")
+                    State.Loaded(actualChapter, index, pageUrl, "https:" + imageUrl.imageUrl)
                 } catch (e: Exception) {
                     Napier.e("error loading initial page", e)
                     State.Error(e)
@@ -53,7 +57,13 @@ class RootViewModel @Inject constructor(
 
     sealed interface State {
         data object Loading : State
-        data class Loaded(val page: Page) : State
+        data class Loaded(
+            val chapter: ComicRepository.Chapter,
+            val pageIndex: Int = 0,
+            val pageUrl: String,
+            val imageUrl: String
+        ) : State
+
         data class Error(val error: Throwable) : State
     }
 }
