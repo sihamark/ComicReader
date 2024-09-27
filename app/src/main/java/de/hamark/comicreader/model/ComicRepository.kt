@@ -68,7 +68,7 @@ class ComicRepository @Inject constructor(
         chapterUrl: String,
     ): List<Page> {
 
-        var currentPage = 1
+        var currentPage = INITIAL_PAGE
         val pages = mutableListOf<Page>()
         var page: Page? = loadPage(chapterUrl, currentPage)
 
