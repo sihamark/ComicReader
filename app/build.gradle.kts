@@ -51,10 +51,12 @@ dependencies {
     testImplementation(libs.junit)
     coreLibraryDesugaring(libs.core.desugar)
 
+    implementation(libs.androidx.activity)
     implementation(libs.androidx.core)
     implementation(libs.androidx.lifecycle.lifecycle)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.activity)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.webkit)
 
     val composeBom = platform(libs.compose.bom)
