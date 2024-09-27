@@ -22,6 +22,7 @@ class ComicRepository @Inject constructor(
         val document = Ksoup.parse(content)
         val comicTitle = document.select("head meta[property=og:title]").attr("content")
         val chapterListElements = document.select("ul.chapter_list > li")
+        val coverImageUrl = document.select("div.detail_info.clearfix img").first()?.attr("src")
         Napier.e { "got ${chapterListElements.count()} chapters" }
         val chapters = chapterListElements.reversed()
             .map { chapter ->
@@ -36,6 +37,7 @@ class ComicRepository @Inject constructor(
         Napier.e { "chapters: ${chapters.size}" }
         return Comic(
             title = comicTitle,
+            coverImageUrl = coverImageUrl,
             homeUrl = url,
             chapters = chapters
         )
@@ -80,11 +82,11 @@ class ComicRepository @Inject constructor(
         return pages
     }
 
-    suspend fun loadImage(imageUrl: String): ImageBitmap {
+    suspend fun loadImage(comicUrl: String, imageUrl: String): ImageBitmap {
         val response = httpClient.get {
             url(imageUrl)
             headers {
-                append("Referer", "https://www.mangatown.com/")
+                append("Referer", URLBuilder(comicUrl).apply { path() }.buildString())
             }
         }
         if (!response.status.isSuccess()) {
@@ -96,6 +98,7 @@ class ComicRepository @Inject constructor(
 
     data class Comic(
         val title: String,
+        val coverImageUrl: String?,
         val homeUrl: String,
         val chapters: List<Chapter>
     )

@@ -27,19 +27,23 @@ class RootViewModel @Inject constructor(
         }
     }
 
-    fun loadPage(chapter: ComicRepository.Chapter? = null, index: Int = 0) {
+    fun loadPage(
+        chapter: ComicRepository.Chapter? = null,
+        index: Int = ComicRepository.INITIAL_PAGE
+    ) {
         viewModelScope.launch {
             try {
                 state = State.Loading
                 state = try {
                     val comic = repository.loadComic()
+                    Napier.e { "got comic: $comic" }
 
                     val actualChapter = chapter ?: comic.chapters.first()
                     val pageUrl = repository.getPageUrl(actualChapter.url, index)
                     val imageUrl = repository.loadPage(actualChapter.url, index)
                         ?: error("page not found")
 
-                    val image = repository.loadImage(imageUrl.imageUrl)
+                    val image = repository.loadImage(comic.homeUrl, imageUrl.imageUrl)
 
                     State.Loaded(actualChapter, index, pageUrl, "https:" + imageUrl.imageUrl, image)
                 } catch (e: Exception) {
