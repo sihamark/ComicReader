@@ -3,6 +3,7 @@ package de.hamark.comicreader.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,16 +35,13 @@ class RootViewModel @Inject constructor(
                     val comic = repository.loadComic()
 
                     val actualChapter = chapter ?: comic.chapters.first()
-//                    val page = repository.loadPage(actualChapter.url, index)
-//                        ?: error("page not found")
-//
-//                    val bitmap = BitmapFactory
-//                        .decodeByteArray(page.imageBytes, 0, page.imageBytes.size)
-//                        .asImageBitmap()
                     val pageUrl = repository.getPageUrl(actualChapter.url, index)
                     val imageUrl = repository.loadPage(actualChapter.url, index)
                         ?: error("page not found")
-                    State.Loaded(actualChapter, index, pageUrl, "https:" + imageUrl.imageUrl)
+
+                    val image = repository.loadImage(imageUrl.imageUrl)
+
+                    State.Loaded(actualChapter, index, pageUrl, "https:" + imageUrl.imageUrl, image)
                 } catch (e: Exception) {
                     Napier.e("error loading initial page", e)
                     State.Error(e)
@@ -61,7 +59,8 @@ class RootViewModel @Inject constructor(
             val chapter: ComicRepository.Chapter,
             val pageIndex: Int = 0,
             val pageUrl: String,
-            val imageUrl: String
+            val imageUrl: String,
+            val image: ImageBitmap
         ) : State
 
         data class Error(val error: Throwable) : State

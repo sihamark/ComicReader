@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.lifecycle)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.webkit)
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)

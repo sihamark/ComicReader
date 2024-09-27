@@ -1,5 +1,6 @@
 package de.hamark.comicreader.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import de.hamark.comicreader.ui.theme.ComicReaderTheme
 
 @Composable
@@ -44,17 +42,12 @@ fun Root() {
                     }
 
                     is RootViewModel.State.Loaded ->
-                        Surface(onClick = { model.loadPage() }) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(state.imageUrl)
-                                    .build(),
+                        Surface(onClick = { model.loadPage(state.chapter, state.pageIndex + 1) }) {
+                            Image(
+                                bitmap = state.image,
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize()
                             )
-//                            AndroidView(::WebView) { webView ->
-//                                webView.loadUrl(state.imageUrl)
-//                            }
                         }
 
                     RootViewModel.State.Loading -> CircularProgressIndicator()

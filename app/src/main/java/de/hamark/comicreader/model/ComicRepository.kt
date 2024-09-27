@@ -1,11 +1,16 @@
 package de.hamark.comicreader.model
 
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.fleeksoft.ksoup.Ksoup
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.util.*
 import javax.inject.Inject
 
 class ComicRepository @Inject constructor(
@@ -36,7 +41,8 @@ class ComicRepository @Inject constructor(
         )
     }
 
-    suspend fun loadPage(chapterUrl: String, page: Int): Page? {
+    suspend fun loadPage(chapterUrl: String, page: Int = INITIAL_PAGE): Page? {
+        check(page >= INITIAL_PAGE) { "page must be >= $INITIAL_PAGE" }
         val pageUrl = getPageUrl(chapterUrl, page)
         val response = httpClient.get(pageUrl)
         if (response.status == HttpStatusCode.NotFound) {
@@ -45,13 +51,17 @@ class ComicRepository @Inject constructor(
         val pageDocument = Ksoup.parse(response.body<String>())
         val imageUrl = pageDocument.select("div#viewer img").attr("src")
 
-        Napier.e { "page url: $pageUrl image url: $imageUrl" }
+        val pageIndices = pageDocument.select("div.page_select option")
+            .mapNotNull { it.text().toIntOrNull() }
+            .distinct()
 
-        return Page(imageUrl)
+        Napier.e { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
+
+        return Page(imageUrl, pageIndices)
     }
 
     fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
-        appendPathSegments("${page + 1}.html")
+        appendPathSegments("$page.html")
     }.buildString()
 
     private suspend fun loadPages(
@@ -70,6 +80,20 @@ class ComicRepository @Inject constructor(
         return pages
     }
 
+    suspend fun loadImage(imageUrl: String): ImageBitmap {
+        val response = httpClient.get {
+            url(imageUrl)
+            headers {
+                append("Referer", "https://www.mangatown.com/")
+            }
+        }
+        if (!response.status.isSuccess()) {
+            error("failed to load image: $imageUrl, status: ${response.status}")
+        }
+        val bytes = response.bodyAsChannel().toByteArray()
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size).asImageBitmap()
+    }
+
     data class Comic(
         val title: String,
         val homeUrl: String,
@@ -83,9 +107,11 @@ class ComicRepository @Inject constructor(
 
     data class Page(
         val imageUrl: String,
+        val listOfPagesInChapter: List<Int>
     )
 
     companion object {
         private const val DEFAULT_COMIC_URL = "https://www.mangatown.com/manga/kaiju_no_8/"
+        const val INITIAL_PAGE = 1
     }
 }
