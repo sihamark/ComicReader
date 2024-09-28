@@ -5,6 +5,7 @@ import androidx.collection.ArrayMap
 import coil.Coil
 import coil.request.ImageRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -19,6 +20,8 @@ class ReaderController @Inject constructor(
 ) {
 
     private lateinit var comic: ComicRepository.Comic
+
+    private val pagesAsyncCache = ArrayMap<PageKey, Deferred<Result<ComicRepository.Page>>>()
 
     private val chapterLock = ReentrantReadWriteLock()
     private val chapterCache = ArrayMap<ComicRepository.Chapter, List<ComicRepository.Page>>()
@@ -57,6 +60,8 @@ class ReaderController @Inject constructor(
 
         }
 
+//        pagesAsyncCache[PageKey(chapter, pageIndex)]?.await()
+
         TODO("Not yet implemented")
     }
 
@@ -85,4 +90,6 @@ class ReaderController @Inject constructor(
     }
 
     private fun ComicRepository.Chapter.isNotFirst() = comic.chapters.first() != this
+
+    data class PageKey(val chapter: ComicRepository.Chapter, val pageIndex: Int)
 }
