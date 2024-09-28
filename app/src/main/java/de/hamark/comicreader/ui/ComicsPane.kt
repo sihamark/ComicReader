@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,7 +37,13 @@ fun ComicsPane(
             } else {
                 LazyColumn {
                     items(comics) { comic ->
-                        ComicItem(comic) { onClickComic(comic) }
+                        Surface(
+                            onClick = { onClickComic(comic) },
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            ComicItem(comic)
+                        }
                     }
                 }
             }
@@ -45,7 +52,7 @@ fun ComicsPane(
 }
 
 @Composable
-fun ComicItem(comic: ComicRepository.Comic, onClick: (() -> Unit)? = null) {
+fun ComicItem(comic: ComicRepository.Comic) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
