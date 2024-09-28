@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import de.hamark.comicreader.ui.NavigationDestination.ADD_COMIC
+import de.hamark.comicreader.ui.SimpleNavigationDestination.ADD_COMIC
 
 @Composable
 fun ComicsRoute(navController: NavController) {
@@ -15,6 +15,6 @@ fun ComicsRoute(navController: NavController) {
     ComicsPane(
         comics = comics,
         onClickAddComic = { navController.navigate(ADD_COMIC.route) },
-        onClickComic = {}
+        onClickComic = { navController.navigate(ComicDestination.withId(it.id)) }
     )
 }

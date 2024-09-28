@@ -114,7 +114,9 @@ class ComicRepository @Inject constructor(
         val coverImageUrl: String,
         val homeUrl: String,
         val chapters: List<Chapter>
-    )
+    ) {
+        val id = homeUrl.encodeBase64()
+    }
 
     data class Chapter(
         val title: String,
