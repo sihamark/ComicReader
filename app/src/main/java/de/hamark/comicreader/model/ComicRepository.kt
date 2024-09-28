@@ -11,11 +11,19 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.util.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class ComicRepository @Inject constructor(
     private val httpClient: HttpClient
 ) {
+
+    private val _comics = MutableStateFlow(emptyList<Comic>())
+    val comics: StateFlow<List<Comic>> = _comics.asStateFlow()
 
     suspend fun loadComic(url: String = DEFAULT_COMIC_URL): Comic {
         val content = httpClient.get(url).body<String>()
@@ -37,7 +45,7 @@ class ComicRepository @Inject constructor(
         Napier.e { "chapters: ${chapters.size}" }
         return Comic(
             title = comicTitle,
-            coverImageUrl = coverImageUrl,
+            coverImageUrl = coverImageUrl ?: error("cover image not found"),
             homeUrl = url,
             chapters = chapters
         )
@@ -86,7 +94,8 @@ class ComicRepository @Inject constructor(
         val response = httpClient.get {
             url(imageUrl)
             headers {
-                append("Referer", URLBuilder(comicUrl).apply { path() }.buildString())
+                val (name, value) = imageHeader(comicUrl)
+                append(name, value)
             }
         }
         if (!response.status.isSuccess()) {
@@ -96,9 +105,13 @@ class ComicRepository @Inject constructor(
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.size).asImageBitmap()
     }
 
+    fun addComic(previewComic: Comic) {
+        _comics.value = (_comics.value + previewComic).distinct()
+    }
+
     data class Comic(
         val title: String,
-        val coverImageUrl: String?,
+        val coverImageUrl: String,
         val homeUrl: String,
         val chapters: List<Chapter>
     )
@@ -114,7 +127,10 @@ class ComicRepository @Inject constructor(
     )
 
     companion object {
-        private const val DEFAULT_COMIC_URL = "https://www.mangatown.com/manga/kaiju_no_8/"
+        const val DEFAULT_COMIC_URL = "https://www.mangatown.com/manga/kaiju_no_8/"
         const val INITIAL_PAGE = 1
+
+        fun imageHeader(comicUrl: String): Pair<String, String> =
+            HttpHeaders.Referrer to URLBuilder(comicUrl).apply { path() }.buildString()
     }
 }
