@@ -17,10 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun PagePane() {
-    val model: RootViewModel = hiltViewModel()
+fun ComicReaderPane() {
+    val model: ComicReaderViewModel = hiltViewModel()
     LaunchedEffect(model) {
-        model.loadPage()
+        model.loadComic()
     }
     Scaffold { innerPadding ->
         Box(
@@ -30,7 +30,7 @@ fun PagePane() {
                 .fillMaxSize()
         ) {
             when (val state = model.state) {
-                is RootViewModel.State.Error -> {
+                is ComicReaderViewModel.State.Error -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "Error loading page")
                         Button(onClick = { model.reloadCurrentPage() }) {
@@ -39,8 +39,8 @@ fun PagePane() {
                     }
                 }
 
-                is RootViewModel.State.Loaded ->
-                    Surface(onClick = { model.loadPage(state.chapter, state.pageIndex + 1) }) {
+                is ComicReaderViewModel.State.Loaded ->
+                    Surface(onClick = { model.loadComic(state.chapter, state.pageIndex + 1) }) {
                         Image(
                             bitmap = state.image,
                             contentDescription = null,
@@ -48,7 +48,7 @@ fun PagePane() {
                         )
                     }
 
-                RootViewModel.State.Loading -> CircularProgressIndicator()
+                ComicReaderViewModel.State.Loading -> CircularProgressIndicator()
             }
         }
     }

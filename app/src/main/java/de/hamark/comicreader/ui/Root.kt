@@ -24,7 +24,7 @@ fun Root() {
             }
             composable(ComicDestination.route) { backStackEntry ->
                 val comicId = ComicDestination.getId(backStackEntry)
-                PagePane()
+                ComicReaderRoute(navController, comicId)
             }
         }
     }

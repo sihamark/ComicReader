@@ -8,12 +8,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.hamark.comicreader.model.ComicRepository
+import de.hamark.comicreader.model.ReaderController
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class RootViewModel @Inject constructor(
+class ComicReaderViewModel @Inject constructor(
+    private val readerController: ReaderController,
     private val repository: ComicRepository
 ) : ViewModel() {
 
@@ -22,12 +24,18 @@ class RootViewModel @Inject constructor(
 
     fun reloadCurrentPage() {
         when (val state = state) {
-            is State.Loaded -> loadPage(state.chapter, state.pageIndex)
-            else -> loadPage()
+            is State.Loaded -> loadComic(state.chapter, state.pageIndex)
+            else -> loadComic()
         }
     }
 
-    fun loadPage(
+    fun loadComic(comicId: String) {
+        viewModelScope.launch {
+            readerController.loadComic(comicId)
+        }
+    }
+
+    fun loadComic(
         chapter: ComicRepository.Chapter? = null,
         index: Int = ComicRepository.INITIAL_PAGE
     ) {

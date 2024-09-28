@@ -67,28 +67,12 @@ class ComicRepository @Inject constructor(
 
         Napier.e { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
 
-        return Page(imageUrl, pageIndices)
+        return Page(page, imageUrl, pageIndices)
     }
 
     fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
         appendPathSegments("$page.html")
     }.buildString()
-
-    private suspend fun loadPages(
-        chapterUrl: String,
-    ): List<Page> {
-
-        var currentPage = INITIAL_PAGE
-        val pages = mutableListOf<Page>()
-        var page: Page? = loadPage(chapterUrl, currentPage)
-
-        while (page != null) {
-            pages.add(page)
-            page = loadPage(chapterUrl, ++currentPage)
-        }
-
-        return pages
-    }
 
     suspend fun loadImage(comicUrl: String, imageUrl: String): ImageBitmap {
         val response = httpClient.get {
@@ -109,13 +93,18 @@ class ComicRepository @Inject constructor(
         _comics.value = (_comics.value + previewComic).distinct()
     }
 
+    fun getComic(comicId: String): Comic =
+        _comics.value.find { it.id == comicId } ?: error("no comic with id '$comicId' found")
+
     data class Comic(
         val title: String,
         val coverImageUrl: String,
         val homeUrl: String,
         val chapters: List<Chapter>
     ) {
-        val id = homeUrl.encodeBase64()
+        val id = homeUrl.replace("/", "")
+            .replace(":", "")
+            .replace(".", "")
     }
 
     data class Chapter(
@@ -124,6 +113,7 @@ class ComicRepository @Inject constructor(
     )
 
     data class Page(
+        val pageIndex: Int,
         val imageUrl: String,
         val listOfPagesInChapter: List<Int>
     )
