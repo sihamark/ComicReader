@@ -101,12 +101,15 @@ fun ComicAddPane(
                 Text("Check Comic")
             }
 
+            //todo: use AnimatedVisibility
             if (isCheckingComic) {
                 Spacer(Modifier.height(16.dp))
                 Text("Checking comic...")
+                Spacer(Modifier.height(8.dp))
                 CircularProgressIndicator()
             }
 
+            //todo: use AnimatedContent
             if (previewComic != null) {
                 Spacer(Modifier.height(16.dp))
                 Text("Comic Preview:")
