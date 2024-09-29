@@ -68,14 +68,16 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.compose.material.icons)
 
-    implementation(libs.napier)
 
     implementation(libs.coil.compose)
+    implementation(libs.material)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
 
     implementation(libs.ksoup)
+
+    implementation(libs.napier)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
