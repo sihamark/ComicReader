@@ -11,9 +11,17 @@ fun ComicReaderRoute(navController: NavController, comicId: String) {
     LaunchedEffect(model) {
         model.loadComic(comicId)
     }
-    ComicReaderPane(
-        state = model.state,
-        pageState = model.pageState,
-        onLoadPage = { pageIndex -> model.getPageState(pageIndex) }
-    )
+    val comic = model.comic
+    if (comic != null) {
+        ComicReaderPane(
+            comic = comic,
+            state = model.state,
+            pageState = model.pageState,
+            onLoadPage = { pageIndex -> model.loadPageState(pageIndex) },
+            onProgress = { pageIndex -> model.setProgress(pageIndex) },
+            onClickBack = { navController.popBackStack() },
+            onClickPreviousChapter = { model.loadPreviousChapter() },
+            onClickNextChapter = { model.loadNextChapter() }
+        )
+    }
 }

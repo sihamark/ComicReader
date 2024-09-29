@@ -6,7 +6,9 @@ import coil.Coil
 import coil.request.ImageRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.flow
@@ -22,23 +24,32 @@ class ReaderController @Inject constructor(
     private val comicRepository: ComicRepository
 ) {
 
-    private lateinit var comic: ComicRepository.Comic
+    lateinit var comic: ComicRepository.Comic
 
     private val pagesAsyncLock = ReentrantReadWriteLock()
     private val pagesAsyncCache = ArrayMap<PageKey, Deferred<Result<ComicRepository.Page>>>()
 
-    suspend fun loadComic(comicId: String): InitialResult {
+    fun setComic(comicId: String) {
         comic = comicRepository.getComic(comicId)
-        Napier.e { "got comic '${comic.title}'" }
+    }
+
+    suspend fun loadComic(): ChapterContentResult {
+        Napier.d { "got comic '${comic.title}'" }
         val chapter = comic.chapters.first()
+        return loadChapter(chapter)
+    }
+
+    suspend fun loadChapter(chapter: ComicRepository.Chapter): ChapterContentResult {
         setProgress(chapter)
-        return InitialResult(
-            comic = comic,
+        return ChapterContentResult(
             chapter = chapter,
-            pagesInChapter = loadChapter(chapter)
+            pagesInChapter = loadFirstPageInChapter(chapter)
         )
     }
 
+    /**
+     * Loads a page from the given chapter as a flow of [PageResult]
+     */
     fun getPage(chapter: ComicRepository.Chapter, pageIndex: Int) = flow {
         try {
             emit(PageResult.Loading)
@@ -49,12 +60,12 @@ class ReaderController @Inject constructor(
         }
     }
 
-    private suspend fun setProgress(
+    suspend fun setProgress(
         chapter: ComicRepository.Chapter,
         pageIndex: Int = ComicRepository.INITIAL_PAGE
     ) {
-        val pagesInChapter = loadChapter(chapter)
-        Napier.e { "loaded chapter '${chapter.title}' with ${pagesInChapter.size} pages" }
+        val pagesInChapter = loadFirstPageInChapter(chapter)
+        Napier.d { "loaded chapter '${chapter.title}' with ${pagesInChapter.size} pages" }
         loadAroundCurrentProgress(chapter, pagesInChapter, pageIndex)
     }
 
@@ -63,7 +74,7 @@ class ReaderController @Inject constructor(
         pagesInChapter: List<Int>,
         pageIndex: Int
     ) {
-        Napier.e { "loading around $pageIndex" }
+        Napier.d { "loading around $pageIndex" }
         coroutineScope {
             //load 2 previous pages and 5 next pages
             ((-2)..5).filterNot { it == 0 }.forEach { delta ->
@@ -98,29 +109,21 @@ class ReaderController @Inject constructor(
                 return
             }
         } else {
-            Napier.e { "loading page $newPage" }
+            Napier.d { "loading page $newPage in current chapter" }
             loadPage(chapter, newPage).await()
         }
-
-//        pagesAsyncCache[PageKey(chapter, pageIndex)]?.await()
-
-//        TODO("Not yet implemented")
     }
 
-    private suspend fun loadImageAsync(imageUrl: String) {
-        coroutineScope {
-            launch {
-                val (name, value) = ComicRepository.imageHeader(comic.homeUrl)
-                val imageRequest = ImageRequest.Builder(context)
-                    .data(imageUrl)
-                    .addHeader(name, value)
-                    .build()
-                Coil.imageLoader(context).execute(imageRequest)
-            }
-        }
+    private fun loadImageAsync(imageUrl: String) {
+        val (name, value) = ComicRepository.imageHeader(comic.homeUrl)
+        val imageRequest = ImageRequest.Builder(context)
+            .data(imageUrl)
+            .addHeader(name, value)
+            .build()
+        Coil.imageLoader(context).enqueue(imageRequest)
     }
 
-    private suspend fun loadChapter(chapter: ComicRepository.Chapter): List<Int> {
+    private suspend fun loadFirstPageInChapter(chapter: ComicRepository.Chapter): List<Int> {
         val pageAsync = pagesAsyncLock
             .read { pagesAsyncCache[PageKey(chapter, ComicRepository.INITIAL_PAGE)] }
             ?: loadPage(chapter, ComicRepository.INITIAL_PAGE)
@@ -130,28 +133,29 @@ class ReaderController @Inject constructor(
     private suspend fun loadPage(
         chapter: ComicRepository.Chapter,
         pageIndex: Int
-    ): Deferred<Result<ComicRepository.Page>> {
+    ): Deferred<Result<ComicRepository.Page>> = coroutineScope {
         val pageAsync = pagesAsyncLock.read {
             pagesAsyncCache[PageKey(chapter, pageIndex)]
         }
         val actualDeferred = if (pageAsync == null) {
-            val deferred = coroutineScope {
-                async {
-                    try {
-                        Napier.e { "loading page $pageIndex" }
-                        val page = comicRepository.loadPage(chapter.url, pageIndex)
-                            ?: error("error getting page $pageIndex for chapter ${chapter.title}")
-                        Napier.e { "got page $pageIndex: $page" }
-                        loadImageAsync(page.imageUrl)
-                        Result.success(page)
-                    } catch (e: Exception) {
-                        Result.failure(e)
-                    }
+            Napier.d("no cached page found, loading page $pageIndex")
+            val deferred = async(start = CoroutineStart.LAZY, context = Dispatchers.IO) {
+                try {
+                    Napier.d { "loading page $pageIndex" }
+                    val page = comicRepository.loadPage(chapter.url, pageIndex)
+                        ?: error("error getting page $pageIndex for chapter ${chapter.title}")
+                    Napier.d { "got page $pageIndex: $page" }
+                    loadImageAsync(page.imageUrl)
+                    Result.success(page)
+                } catch (e: Exception) {
+                    Napier.e(e) { "error loading page $pageIndex" }
+                    Result.failure(e)
                 }
             }
             pagesAsyncLock.write {
                 pagesAsyncCache[PageKey(chapter, pageIndex)] = deferred
             }
+            deferred.start()
             deferred
         } else {
             pageAsync
@@ -159,12 +163,13 @@ class ReaderController @Inject constructor(
 
         val pageResult = actualDeferred.await()
         if (pageResult.isFailure) {
+            Napier.e { "page loading was unsuccessful, empty cache and try again" }
             pagesAsyncLock.write {
                 pagesAsyncCache.remove(PageKey(chapter, pageIndex))?.cancel()
             }
-            return loadPage(chapter, pageIndex)
+            return@coroutineScope loadPage(chapter, pageIndex)
         }
-        return actualDeferred
+        return@coroutineScope actualDeferred
     }
 
     private fun ComicRepository.Chapter.isFirst() = comic.chapters.first() == this
@@ -172,8 +177,7 @@ class ReaderController @Inject constructor(
 
     data class PageKey(val chapter: ComicRepository.Chapter, val pageIndex: Int)
 
-    data class InitialResult(
-        val comic: ComicRepository.Comic,
+    data class ChapterContentResult(
         val chapter: ComicRepository.Chapter,
         val pagesInChapter: List<Int>
     )
