@@ -1,9 +1,9 @@
 package de.hamark.comicreader.ui
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,52 +15,32 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ComicReaderViewModel @Inject constructor(
-    private val readerController: ReaderController,
-    private val repository: ComicRepository
+    private val readerController: ReaderController
 ) : ViewModel() {
 
     var state: State by mutableStateOf(State.Loading)
         private set
 
-    fun reloadCurrentPage() {
-        when (val state = state) {
-            is State.Loaded -> loadComic(state.chapter, state.pageIndex)
-            else -> loadComic()
-        }
-    }
+    var pageState = mutableStateMapOf<Int, ReaderController.PageResult>()
+        private set
 
     fun loadComic(comicId: String) {
         viewModelScope.launch {
-            readerController.loadComic(comicId)
+            val result = readerController.loadComic(comicId)
+            state = State.Loaded(
+                comic = result.comic,
+                chapter = result.chapter,
+                pages = result.pagesInChapter
+            )
         }
     }
 
-    fun loadComic(
-        chapter: ComicRepository.Chapter? = null,
-        index: Int = ComicRepository.INITIAL_PAGE
-    ) {
+    fun getPageState(pageIndex: Int) {
         viewModelScope.launch {
-            try {
-                state = State.Loading
-                state = try {
-                    val comic = repository.loadComic()
-                    Napier.e { "got comic: $comic" }
-
-                    val actualChapter = chapter ?: comic.chapters.first()
-                    val pageUrl = repository.getPageUrl(actualChapter.url, index)
-                    val imageUrl = repository.loadPage(actualChapter.url, index)
-                        ?: error("page not found")
-
-                    val image = repository.loadImage(comic.homeUrl, imageUrl.imageUrl)
-
-                    State.Loaded(actualChapter, index, pageUrl, "https:" + imageUrl.imageUrl, image)
-                } catch (e: Exception) {
-                    Napier.e("error loading initial page", e)
-                    State.Error(e)
-                }
-            } catch (e: Exception) {
-                Napier.e("error loading page", e)
-                state = State.Error(e)
+            val chapter = (state as? State.Loaded)?.chapter ?: error("chapter not loaded")
+            Napier.e { "get page state for page: $pageIndex" }
+            readerController.getPage(chapter, pageIndex).collect { pageResult ->
+                pageState[pageIndex] = pageResult
             }
         }
     }
@@ -68,13 +48,11 @@ class ComicReaderViewModel @Inject constructor(
     sealed interface State {
         data object Loading : State
         data class Loaded(
+            val comic: ComicRepository.Comic,
             val chapter: ComicRepository.Chapter,
-            val pageIndex: Int = 0,
-            val pageUrl: String,
-            val imageUrl: String,
-            val image: ImageBitmap
+            val pages: List<Int>,
         ) : State
 
-        data class Error(val error: Throwable) : State
+        data class Error(val message: String) : State
     }
 }

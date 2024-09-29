@@ -16,7 +16,7 @@ data object ComicDestination : NavigationDestination {
 
     override val route: String = withId("{id}")
 
-    fun withId(id: String) = "comic/{id}"
+    fun withId(id: String) = "comic/$id"
     fun getId(entry: NavBackStackEntry): String =
         entry.arguments?.getString(ID) ?: throw IllegalArgumentException("No ID found in $entry")
 }

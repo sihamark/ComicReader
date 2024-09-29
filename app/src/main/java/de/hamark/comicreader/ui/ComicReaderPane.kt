@@ -1,27 +1,34 @@
 package de.hamark.comicreader.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import de.hamark.comicreader.model.ComicRepository
+import de.hamark.comicreader.model.ComicRepository.Companion.imageHeader
+import de.hamark.comicreader.model.ReaderController
 
 @Composable
-fun ComicReaderPane() {
-    val model: ComicReaderViewModel = hiltViewModel()
-    LaunchedEffect(model) {
-        model.loadComic()
-    }
+fun ComicReaderPane(
+    state: ComicReaderViewModel.State,
+    pageState: Map<Int, ReaderController.PageResult>,
+    onLoadPage: (Int) -> Unit
+) {
     Scaffold { innerPadding ->
         Box(
             contentAlignment = Alignment.Center,
@@ -29,26 +36,80 @@ fun ComicReaderPane() {
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            when (val state = model.state) {
-                is ComicReaderViewModel.State.Error -> {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "Error loading page")
-                        Button(onClick = { model.reloadCurrentPage() }) {
-                            Text(text = "Retry")
+            when (state) {
+                ComicReaderViewModel.State.Loading -> CircularProgressIndicator()
+                is ComicReaderViewModel.State.Loaded -> ComicReaderContent(
+                    comic = state.comic,
+                    chapter = state.chapter,
+                    pages = state.pages,
+                    pageState = pageState,
+                    onLoadPage = onLoadPage
+                )
+
+                is ComicReaderViewModel.State.Error -> ComicReaderError(state.message)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComicReaderError(message: String) {
+    Text(text = "Error: $message")
+}
+
+@Composable
+private fun ComicReaderContent(
+    comic: ComicRepository.Comic,
+    chapter: ComicRepository.Chapter,
+    pages: List<Int>,
+    pageState: Map<Int, ReaderController.PageResult>,
+    onLoadPage: (Int) -> Unit
+) {
+    val context = LocalContext.current
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+
+        Text(text = "Comic: ${comic.title}")
+        Text(text = "Chapter: ${chapter.title}")
+        LazyColumn {
+            items(pages) { pageIndex ->
+                val result = pageState[pageIndex] ?: ReaderController.PageResult.Loading
+                LaunchedEffect(pageIndex) {
+                    onLoadPage(pageIndex)
+                }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp)
+                ) {
+                    Text(text = "Page $pageIndex")
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        when (result) {
+                            ReaderController.PageResult.Loading -> CircularProgressIndicator()
+                            is ReaderController.PageResult.Loaded ->
+                                AsyncImage(
+                                    model = ImageRequest.Builder(context)
+                                        .data(result.page.imageUrl)
+                                        .apply {
+                                            val (name, value) = imageHeader(comic.homeUrl)
+                                            addHeader(name, value)
+                                        }
+                                        .build(),
+                                    contentDescription = "Page $pageIndex"
+                                )
+
+                            is ReaderController.PageResult.Error -> Text(text = "Error: ${result.error}")
                         }
                     }
                 }
-
-                is ComicReaderViewModel.State.Loaded ->
-                    Surface(onClick = { model.loadComic(state.chapter, state.pageIndex + 1) }) {
-                        Image(
-                            bitmap = state.image,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                ComicReaderViewModel.State.Loading -> CircularProgressIndicator()
             }
         }
     }
