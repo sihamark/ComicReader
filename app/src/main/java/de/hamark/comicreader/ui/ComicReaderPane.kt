@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cyclone
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -15,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -66,7 +69,6 @@ private fun ComicReaderContent(
     pageState: Map<Int, ReaderController.PageResult>,
     onLoadPage: (Int) -> Unit
 ) {
-    val context = LocalContext.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -100,17 +102,16 @@ private fun ComicReaderContent(
                             ReaderController.PageResult.Loading -> CircularProgressIndicator()
                             is ReaderController.PageResult.Loaded -> {
                                 AsyncImage(
-                                    model = ImageRequest.Builder(context)
+                                    model = ImageRequest.Builder(LocalContext.current)
                                         .data(result.page.imageUrl)
                                         .apply {
                                             val (name, value) = imageHeader(comic.homeUrl)
                                             addHeader(name, value)
                                         }
-                                        .listener { request, result ->
-                                            Napier.e { "image request: $request, result: $result" }
-                                        }
                                         .build(),
-                                    contentDescription = "Page $pageIndex"
+                                    contentDescription = "Page $pageIndex",
+                                    placeholder = rememberVectorPainter(Icons.Default.Cyclone),
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
 

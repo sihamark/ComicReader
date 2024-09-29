@@ -67,7 +67,11 @@ class ComicRepository @Inject constructor(
 
         Napier.d { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
 
-        return Page(page, imageUrl, pageIndices)
+        return Page(
+            page,
+            URLBuilder(imageUrl).apply { protocol = URLProtocol.HTTPS }.buildString(),
+            pageIndices
+        )
     }
 
     private fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
