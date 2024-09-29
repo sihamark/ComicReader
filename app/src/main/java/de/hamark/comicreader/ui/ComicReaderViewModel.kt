@@ -27,6 +27,9 @@ class ComicReaderViewModel @Inject constructor(
     fun loadComic(comicId: String) {
         viewModelScope.launch {
             val result = readerController.loadComic(comicId)
+            result.pagesInChapter.forEach {
+                pageState += it to ReaderController.PageResult.Loading
+            }
             state = State.Loaded(
                 comic = result.comic,
                 chapter = result.chapter,

@@ -65,12 +65,12 @@ class ComicRepository @Inject constructor(
             .mapNotNull { it.text().toIntOrNull() }
             .distinct()
 
-        Napier.e { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
+        Napier.d { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
 
         return Page(page, imageUrl, pageIndices)
     }
 
-    fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
+    private fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
         appendPathSegments("$page.html")
     }.buildString()
 

@@ -22,6 +22,7 @@ import coil.request.ImageRequest
 import de.hamark.comicreader.model.ComicRepository
 import de.hamark.comicreader.model.ComicRepository.Companion.imageHeader
 import de.hamark.comicreader.model.ReaderController
+import io.github.aakira.napier.Napier
 
 @Composable
 fun ComicReaderPane(
@@ -77,9 +78,12 @@ private fun ComicReaderContent(
         Text(text = "Chapter: ${chapter.title}")
         LazyColumn {
             items(pages) { pageIndex ->
-                val result = pageState[pageIndex] ?: ReaderController.PageResult.Loading
+                val result = pageState[pageIndex]!!
                 LaunchedEffect(pageIndex) {
                     onLoadPage(pageIndex)
+                }
+                LaunchedEffect(result) {
+                    Napier.e { "$pageIndex: result: $result" }
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -94,7 +98,7 @@ private fun ComicReaderContent(
                     ) {
                         when (result) {
                             ReaderController.PageResult.Loading -> CircularProgressIndicator()
-                            is ReaderController.PageResult.Loaded ->
+                            is ReaderController.PageResult.Loaded -> {
                                 AsyncImage(
                                     model = ImageRequest.Builder(context)
                                         .data(result.page.imageUrl)
@@ -102,9 +106,13 @@ private fun ComicReaderContent(
                                             val (name, value) = imageHeader(comic.homeUrl)
                                             addHeader(name, value)
                                         }
+                                        .listener { request, result ->
+                                            Napier.e { "image request: $request, result: $result" }
+                                        }
                                         .build(),
                                     contentDescription = "Page $pageIndex"
                                 )
+                            }
 
                             is ReaderController.PageResult.Error -> Text(text = "Error: ${result.error}")
                         }
