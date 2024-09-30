@@ -6,11 +6,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import eu.heha.cyclone.ui.SimpleNavigationDestination.ADD_COMIC
 import eu.heha.cyclone.ui.SimpleNavigationDestination.COMICS
-import eu.heha.cyclone.ui.theme.ComicReaderTheme
+import eu.heha.cyclone.ui.theme.CycloneTheme
 
 @Composable
 fun Root() {
-    ComicReaderTheme {
+    CycloneTheme {
         val navController = rememberNavController()
         NavHost(
             navController = navController,

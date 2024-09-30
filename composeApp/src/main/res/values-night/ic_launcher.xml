@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--taken from Color.kt primary-->
+    <color name="ic_launcher_background">#F5B2E1</color>
+    <!--taken from Color.kt onPrimary-->
+    <color name="ic_launcher_foreground">#4E1E45</color>
+</resources>
