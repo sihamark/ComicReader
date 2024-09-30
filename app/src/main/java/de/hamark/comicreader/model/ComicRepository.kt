@@ -42,6 +42,9 @@ class ComicRepository @Inject constructor(
                 }.buildString()
                 Chapter(chapterName, chapterUrl)
             }
+        if (chapters.isEmpty()) {
+            error("no chapters found")
+        }
         Napier.e { "chapters: ${chapters.size}" }
         return Comic(
             title = comicTitle,
