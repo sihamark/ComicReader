@@ -25,7 +25,7 @@ class ComicRepository @Inject constructor(
     private val _comics = MutableStateFlow(emptyList<Comic>())
     val comics: StateFlow<List<Comic>> = _comics.asStateFlow()
 
-    suspend fun loadComic(url: String = DEFAULT_COMIC_URL): Comic {
+    suspend fun loadComic(url: String): Comic {
         val content = httpClient.get(url).body<String>()
         val document = Ksoup.parse(content)
         val comicTitle = document.select("head meta[property=og:title]").attr("content")
@@ -68,9 +68,11 @@ class ComicRepository @Inject constructor(
         Napier.d { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
 
         return Page(
-            page,
-            URLBuilder(imageUrl).apply { protocol = URLProtocol.HTTPS }.buildString(),
-            pageIndices
+            pageIndex = page,
+            imageUrl = URLBuilder(imageUrl)
+                .apply { protocol = URLProtocol.HTTPS }
+                .buildString(),
+            listOfPagesInChapter = pageIndices
         )
     }
 
@@ -123,7 +125,12 @@ class ComicRepository @Inject constructor(
     )
 
     companion object {
-        const val DEFAULT_COMIC_URL = "https://www.mangatown.com/manga/kaiju_no_8/"
+        fun dummyComics() = listOf(
+            "Kaiju No. 8" to "https://www.mangatown.com/manga/kaiju_no_8/",
+            "Fairy Tail" to "https://www.mangatown.com/manga/fairy_tail/",
+            "Naruto" to "https://www.mangatown.com/manga/naruto/"
+        )
+
         const val INITIAL_PAGE = 1
 
         fun imageHeader(comicUrl: String): Pair<String, String> =

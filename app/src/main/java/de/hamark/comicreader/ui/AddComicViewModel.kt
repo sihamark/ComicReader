@@ -15,32 +15,38 @@ import javax.inject.Inject
 class AddComicViewModel @Inject constructor(
     private val comicRepository: ComicRepository
 ) : ViewModel() {
-    var comicUrl by mutableStateOf("")
-        private set
-    var previewComic by mutableStateOf<ComicRepository.Comic?>(null)
-        private set
-    var isCheckingComic by mutableStateOf(false)
+    var state by mutableStateOf(State())
         private set
 
     fun onComicUrlChange(newComicUrl: String) {
-        comicUrl = newComicUrl
+        state = state.copy(comicUrl = newComicUrl)
     }
 
     fun checkComic() {
         viewModelScope.launch {
-            isCheckingComic = true
-            previewComic = try {
-                comicRepository.loadComic(comicUrl).also {
-                    Napier.d("Loaded comic: $it")
+            state = state.copy(isCheckingComic = true)
+            state = state.copy(
+                previewComicResult = try {
+                    Result.success(comicRepository.loadComic(state.comicUrl).also {
+                        Napier.d("loaded comic: $it")
+                    })
+                } catch (e: Exception) {
+                    Result.failure(e)
                 }
-            } catch (e: Exception) {
-                null
-            }
-            isCheckingComic = false
+            )
+            state = state.copy(isCheckingComic = false)
         }
     }
 
-    suspend fun addComic() {
-        comicRepository.addComic(previewComic!!)
+    fun addComic() {
+        val previewComic = state.previewComicResult?.getOrNull()
+        checkNotNull(previewComic) { "previewComic must not be null, was ${state.previewComicResult}" }
+        comicRepository.addComic(previewComic)
     }
+
+    data class State(
+        val comicUrl: String = "",
+        val previewComicResult: Result<ComicRepository.Comic>? = null,
+        val isCheckingComic: Boolean = false
+    )
 }

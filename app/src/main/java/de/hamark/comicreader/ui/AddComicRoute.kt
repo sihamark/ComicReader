@@ -11,9 +11,8 @@ fun AddComicRoute(navController: NavController) {
     val model = hiltViewModel<AddComicViewModel>()
     val scope = rememberCoroutineScope()
     ComicAddPane(
-        comicUrl = model.comicUrl,
+        state = model.state,
         onComicUrlChange = model::onComicUrlChange,
-        isCheckingComic = model.isCheckingComic,
         onClickAddComic = {
             scope.launch {
                 model.addComic()
@@ -21,7 +20,6 @@ fun AddComicRoute(navController: NavController) {
             }
         },
         onClickCheckComic = model::checkComic,
-        previewComic = model.previewComic,
         onClickBack = { navController.popBackStack() }
     )
 }

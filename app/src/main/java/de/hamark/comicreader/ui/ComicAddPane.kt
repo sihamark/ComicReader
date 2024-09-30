@@ -1,5 +1,7 @@
 package de.hamark.comicreader.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,10 +36,8 @@ import de.hamark.comicreader.model.ComicRepository
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComicAddPane(
-    comicUrl: String,
+    state: AddComicViewModel.State,
     onComicUrlChange: (String) -> Unit,
-    isCheckingComic: Boolean,
-    previewComic: ComicRepository.Comic?,
     onClickBack: () -> Unit,
     onClickCheckComic: () -> Unit,
     onClickAddComic: () -> Unit
@@ -65,13 +65,15 @@ fun ComicAddPane(
                     isMoreMenuVisible,
                     onDismissRequest = { isMoreMenuVisible = false }
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("Fill in Kaiju No. 8") },
-                        onClick = {
-                            onComicUrlChange(ComicRepository.DEFAULT_COMIC_URL)
-                            isMoreMenuVisible = false
-                        }
-                    )
+                    ComicRepository.dummyComics().forEach { (name, url) ->
+                        DropdownMenuItem(
+                            text = { Text("Fill in \"$name\"") },
+                            onClick = {
+                                onComicUrlChange(url)
+                                isMoreMenuVisible = false
+                            }
+                        )
+                    }
                 }
             }
         )
@@ -85,9 +87,9 @@ fun ComicAddPane(
                 .padding(horizontal = 16.dp, vertical = 32.dp)
         ) {
             OutlinedTextField(
-                value = comicUrl,
+                value = state.comicUrl,
                 onValueChange = onComicUrlChange,
-                enabled = !isCheckingComic,
+                enabled = !state.isCheckingComic,
                 label = { Text("Comic URL") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -95,32 +97,44 @@ fun ComicAddPane(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                enabled = !isCheckingComic,
+                enabled = !state.isCheckingComic && state.comicUrl.isNotBlank(),
                 onClick = onClickCheckComic
             ) {
                 Text("Check Comic")
             }
 
-            //todo: use AnimatedVisibility
-            if (isCheckingComic) {
-                Spacer(Modifier.height(16.dp))
-                Text("Checking comic...")
-                Spacer(Modifier.height(8.dp))
-                CircularProgressIndicator()
+            AnimatedVisibility(state.isCheckingComic) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Spacer(Modifier.height(16.dp))
+                    Text("Checking comic...")
+                    Spacer(Modifier.height(8.dp))
+                    CircularProgressIndicator()
+                }
             }
 
-            //todo: use AnimatedContent
-            if (previewComic != null) {
-                Spacer(Modifier.height(16.dp))
-                Text("Comic Preview:")
-                Spacer(Modifier.height(8.dp))
-                ComicItem(previewComic)
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    enabled = !isCheckingComic,
-                    onClick = onClickAddComic
-                ) {
-                    Text("Add Comic")
+            AnimatedContent(
+                targetState = state.previewComicResult,
+                contentAlignment = Alignment.Center
+            ) { previewComicResult ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    previewComicResult?.getOrNull()?.also { previewComic ->
+                        Spacer(Modifier.height(16.dp))
+                        Text("Comic Preview:")
+                        Spacer(Modifier.height(8.dp))
+                        ComicItem(previewComic)
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            enabled = !state.isCheckingComic,
+                            onClick = onClickAddComic
+                        ) {
+                            Text("Add Comic")
+                        }
+                    }
+
+                    previewComicResult?.exceptionOrNull()?.also { exception ->
+                        Spacer(Modifier.height(16.dp))
+                        Text("Failed to load comic: ${exception.message}")
+                    }
                 }
             }
         }

@@ -3,12 +3,19 @@ package de.hamark.comicreader.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -22,13 +29,26 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import de.hamark.comicreader.model.ComicRepository
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComicsPane(
     comics: List<ComicRepository.Comic>,
     onClickAddComic: () -> Unit,
     onClickComic: (ComicRepository.Comic) -> Unit
 ) {
-    Scaffold { innerPadding ->
+    Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Comics") },
+                actions = {
+                    IconButton(onClick = onClickAddComic) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Comic")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
         Box(
             modifier = Modifier.padding(innerPadding)
         ) {
