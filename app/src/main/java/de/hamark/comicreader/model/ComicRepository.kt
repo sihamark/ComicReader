@@ -11,17 +11,26 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.util.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class ComicRepository @Inject constructor(
     private val httpClient: HttpClient
 ) {
 
-    suspend fun loadComic(url: String = DEFAULT_COMIC_URL): Comic {
+    private val _comics = MutableStateFlow(emptyList<Comic>())
+    val comics: StateFlow<List<Comic>> = _comics.asStateFlow()
+
+    suspend fun loadComic(url: String): Comic {
         val content = httpClient.get(url).body<String>()
         val document = Ksoup.parse(content)
         val comicTitle = document.select("head meta[property=og:title]").attr("content")
         val chapterListElements = document.select("ul.chapter_list > li")
+        val coverImageUrl = document.select("div.detail_info.clearfix img").first()?.attr("src")
         Napier.e { "got ${chapterListElements.count()} chapters" }
         val chapters = chapterListElements.reversed()
             .map { chapter ->
@@ -33,9 +42,13 @@ class ComicRepository @Inject constructor(
                 }.buildString()
                 Chapter(chapterName, chapterUrl)
             }
+        if (chapters.isEmpty()) {
+            error("no chapters found")
+        }
         Napier.e { "chapters: ${chapters.size}" }
         return Comic(
             title = comicTitle,
+            coverImageUrl = coverImageUrl ?: error("cover image not found"),
             homeUrl = url,
             chapters = chapters
         )
@@ -55,36 +68,27 @@ class ComicRepository @Inject constructor(
             .mapNotNull { it.text().toIntOrNull() }
             .distinct()
 
-        Napier.e { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
+        Napier.d { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
 
-        return Page(imageUrl, pageIndices)
+        return Page(
+            pageIndex = page,
+            imageUrl = URLBuilder(imageUrl)
+                .apply { protocol = URLProtocol.HTTPS }
+                .buildString(),
+            listOfPagesInChapter = pageIndices
+        )
     }
 
-    fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
+    private fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
         appendPathSegments("$page.html")
     }.buildString()
 
-    private suspend fun loadPages(
-        chapterUrl: String,
-    ): List<Page> {
-
-        var currentPage = INITIAL_PAGE
-        val pages = mutableListOf<Page>()
-        var page: Page? = loadPage(chapterUrl, currentPage)
-
-        while (page != null) {
-            pages.add(page)
-            page = loadPage(chapterUrl, ++currentPage)
-        }
-
-        return pages
-    }
-
-    suspend fun loadImage(imageUrl: String): ImageBitmap {
+    suspend fun loadImage(comicUrl: String, imageUrl: String): ImageBitmap {
         val response = httpClient.get {
             url(imageUrl)
             headers {
-                append("Referer", "https://www.mangatown.com/")
+                val (name, value) = imageHeader(comicUrl)
+                append(name, value)
             }
         }
         if (!response.status.isSuccess()) {
@@ -94,11 +98,23 @@ class ComicRepository @Inject constructor(
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.size).asImageBitmap()
     }
 
+    fun addComic(previewComic: Comic) {
+        _comics.value = (_comics.value + previewComic).distinct()
+    }
+
+    fun getComic(comicId: String): Comic =
+        _comics.value.find { it.id == comicId } ?: error("no comic with id '$comicId' found")
+
     data class Comic(
         val title: String,
+        val coverImageUrl: String,
         val homeUrl: String,
         val chapters: List<Chapter>
-    )
+    ) {
+        val id = homeUrl.replace("/", "")
+            .replace(":", "")
+            .replace(".", "")
+    }
 
     data class Chapter(
         val title: String,
@@ -106,12 +122,21 @@ class ComicRepository @Inject constructor(
     )
 
     data class Page(
+        val pageIndex: Int,
         val imageUrl: String,
         val listOfPagesInChapter: List<Int>
     )
 
     companion object {
-        private const val DEFAULT_COMIC_URL = "https://www.mangatown.com/manga/kaiju_no_8/"
+        fun dummyComics() = listOf(
+            "Kaiju No. 8" to "https://www.mangatown.com/manga/kaiju_no_8/",
+            "Fairy Tail" to "https://www.mangatown.com/manga/fairy_tail/",
+            "Naruto" to "https://www.mangatown.com/manga/naruto/"
+        )
+
         const val INITIAL_PAGE = 1
+
+        fun imageHeader(comicUrl: String): Pair<String, String> =
+            HttpHeaders.Referrer to URLBuilder(comicUrl).apply { path() }.buildString()
     }
 }

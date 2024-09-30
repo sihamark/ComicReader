@@ -51,10 +51,12 @@ dependencies {
     testImplementation(libs.junit)
     coreLibraryDesugaring(libs.core.desugar)
 
+    implementation(libs.androidx.activity)
     implementation(libs.androidx.core)
     implementation(libs.androidx.lifecycle.lifecycle)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.activity)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.webkit)
 
     val composeBom = platform(libs.compose.bom)
@@ -66,14 +68,16 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.compose.material.icons)
 
-    implementation(libs.napier)
 
     implementation(libs.coil.compose)
+    implementation(libs.material)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
 
     implementation(libs.ksoup)
+
+    implementation(libs.napier)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
