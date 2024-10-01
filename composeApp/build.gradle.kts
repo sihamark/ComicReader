@@ -57,7 +57,7 @@ kotlin {
 
 android {
     namespace = "eu.heha.cyclone"
-    compileSdk = 35
+    compileSdk = 34
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
@@ -66,7 +66,7 @@ android {
     defaultConfig {
         applicationId = "eu.heha.cyclone"
         minSdk = 28
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0.0-alpha01"
 
