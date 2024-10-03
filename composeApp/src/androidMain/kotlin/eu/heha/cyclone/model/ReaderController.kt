@@ -1,10 +1,6 @@
 package eu.heha.cyclone.model
 
-import android.content.Context
 import androidx.collection.ArrayMap
-import coil.Coil
-import coil.request.ImageRequest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -14,15 +10,10 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import javax.inject.Inject
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class ReaderController @Inject constructor(
-    @ApplicationContext
-    private val context: Context,
-    private val comicRepository: ComicRepository
-) {
+class ReaderController(private val comicRepository: ComicRepository) {
 
     lateinit var comic: ComicRepository.Comic
 
@@ -115,12 +106,12 @@ class ReaderController @Inject constructor(
     }
 
     private fun loadImageAsync(imageUrl: String) {
-        val (name, value) = ComicRepository.imageHeader(comic.homeUrl)
-        val imageRequest = ImageRequest.Builder(context)
-            .data(imageUrl)
-            .addHeader(name, value)
-            .build()
-        Coil.imageLoader(context).enqueue(imageRequest)
+//        val (name, value) = ComicRepository.imageHeader(comic.homeUrl)
+//        val imageRequest = ImageRequest.Builder(context)
+//            .data(imageUrl)
+//            .addHeader(name, value)
+//            .build()
+//        Coil.imageLoader(context).enqueue(imageRequest)
     }
 
     private suspend fun loadFirstPageInChapter(chapter: ComicRepository.Chapter): List<Int> {

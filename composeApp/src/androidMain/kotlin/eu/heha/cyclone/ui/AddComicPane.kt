@@ -35,7 +35,7 @@ import eu.heha.cyclone.model.ComicRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ComicAddPane(
+fun AddComicPane(
     state: AddComicViewModel.State,
     onComicUrlChange: (String) -> Unit,
     onClickBack: () -> Unit,

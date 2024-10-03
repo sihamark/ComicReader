@@ -14,13 +14,8 @@ import io.ktor.util.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class ComicRepository @Inject constructor(
-    private val httpClient: HttpClient
-) {
+class ComicRepository(private val httpClient: HttpClient) {
 
     private val _comics = MutableStateFlow(emptyList<Comic>())
     val comics: StateFlow<List<Comic>> = _comics.asStateFlow()

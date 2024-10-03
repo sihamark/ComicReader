@@ -4,7 +4,6 @@ android-gradle-plugin = "8.5.2" #downgraded to ensure compatibility with multipl
 kotlin = "2.0.20"
 kotlinx-coroutines = "1.9.0"
 kotlinx-datetime = "0.6.0"
-ksp = "2.0.20-1.0.25"
 
 core-desugar = "2.1.2"
 
@@ -13,22 +12,21 @@ androidx-appcompat = "1.7.0"
 androidx-datastore = "1.1.1"
 androidx-media3 = "1.4.1"
 androidx-activity = "1.9.2"
-androidx-navigation = "2.8.1"
+androidx-navigation = "2.8.2"
 androidx-lifecycle = "2.8.6"
 androidx-hilt-navigation-compose = "1.2.0"
-androidx-compose-bom = "2024.09.02"
+androidx-compose-bom = "2024.09.03"
 androidx-compose-material-navigation = "1.7.0-beta01"
-androidx-webkit = "1.12.0"
+androidx-webkit = "1.12.1"
 
 material = "1.12.0"
 jetbrains-compose = "1.7.0-rc01"
-
-hilt = "2.52"
 
 coil-compose = "2.7.0"
 
 napier = "2.7.1"
 
+koin = "4.0.0"
 ktor = "2.3.12"
 
 ksoup = "0.1.8"
@@ -71,11 +69,13 @@ compose-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil-compose" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-compose = { module = "io.insert-koin:koin-androidx-compose" }
+koin-compose-navigation = { module = "io.insert-koin:koin-androidx-compose-navigation" }
+
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-
-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
-hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 
@@ -93,5 +93,3 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrains-compose" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

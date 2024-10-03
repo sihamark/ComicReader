@@ -2,15 +2,15 @@ package eu.heha.cyclone.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AddComicRoute(navController: NavController) {
-    val model = hiltViewModel<AddComicViewModel>()
+    val model = koinViewModel<AddComicViewModel>()
     val scope = rememberCoroutineScope()
-    ComicAddPane(
+    AddComicPane(
         state = model.state,
         onComicUrlChange = model::onComicUrlChange,
         onClickAddComic = {
