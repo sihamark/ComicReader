@@ -1,5 +1,6 @@
 package eu.heha.cyclone.ui
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,11 +12,14 @@ import org.koin.compose.KoinApplication
 import org.koin.core.module.Module
 
 @Composable
-fun Root(koinModule: Module) {
+fun Root(
+    koinModule: Module,
+    colorSchemeOverride: (isDarkTheme: Boolean) -> ColorScheme? = { null }
+) {
     KoinApplication(
         application = { modules(koinModule) }
     ) {
-        CycloneTheme {
+        CycloneTheme(colorSchemeOverride = colorSchemeOverride) {
             val navController = rememberNavController()
             NavHost(
                 navController = navController,

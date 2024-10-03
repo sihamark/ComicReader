@@ -19,6 +19,9 @@ androidx-compose-bom = "2024.09.03"
 androidx-compose-material-navigation = "1.7.0-beta01"
 androidx-webkit = "1.12.1"
 
+lifecycle = "2.8.2"
+navigation = "2.8.0-alpha10"
+
 material = "1.12.0"
 jetbrains-compose = "1.7.0-rc01"
 
@@ -50,9 +53,9 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-lifecycle = { module = "androidx.lifecycle:lifecycle-runtime", version.ref = "androidx-lifecycle" }
-androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycle" }
-androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidx-hilt-navigation-compose" }
-androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "androidx-webkit" }
+
+lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" }
 
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidx-compose-bom" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
@@ -74,8 +77,9 @@ material = { module = "com.google.android.material:material", version.ref = "mat
 
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-core = { module = "io.insert-koin:koin-core" }
-koin-compose = { module = "io.insert-koin:koin-androidx-compose" }
-koin-compose-navigation = { module = "io.insert-koin:koin-androidx-compose-navigation" }
+koin-compose = { module = "io.insert-koin:koin-compose" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
+koin-compose-viewmodel-navigation = { module = "io.insert-koin:koin-compose-viewmodel-navigation" }
 
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
