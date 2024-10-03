@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import eu.heha.cyclone.di.koinModule
 import eu.heha.cyclone.ui.Root
 
 class ComicReaderActivity : ComponentActivity() {
@@ -18,8 +19,9 @@ class ComicReaderActivity : ComponentActivity() {
                 Color.Transparent.toArgb()
             )
         )
+        val koinModule = koinModule(applicationContext)
         setContent {
-            Root()
+            Root(koinModule)
         }
     }
 }

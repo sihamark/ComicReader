@@ -30,13 +30,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.PlatformContext
+import coil3.compose.AsyncImage
+import coil3.imageLoader
+import coil3.request.ImageRequest
 import eu.heha.cyclone.model.ComicRepository
-import eu.heha.cyclone.model.ComicRepository.Companion.imageHeader
+import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
 import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.ui.ComicReaderViewModel.State.Loaded
 import io.github.aakira.napier.Napier
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,22 +159,26 @@ private fun ComicReaderContent(
                         modifier = Modifier.weight(1f)
                     ) {
                         when (result) {
-                            ReaderController.PageResult.Loading -> CircularProgressIndicator()
+                            ReaderController.PageResult.Loading -> {
+                                CircularProgressIndicator()
+                            }
+
                             is ReaderController.PageResult.Loaded -> {
+                                val platformContext = koinInject<PlatformContext>()
                                 AsyncImage(
                                     model = ImageRequest.Builder(LocalContext.current)
                                         .data(result.page.imageUrl)
-                                        .apply {
-                                            val (name, value) = imageHeader(comic.homeUrl)
-                                            addHeader(name, value)
-                                        }
+                                        .addComicHeader(comic.homeUrl)
                                         .build(),
                                     contentDescription = "Page $pageIndex",
+                                    imageLoader = platformContext.imageLoader,
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
 
-                            is ReaderController.PageResult.Error -> Text(text = "Error: ${result.error}")
+                            is ReaderController.PageResult.Error -> {
+                                Text(text = "Error: ${result.error}")
+                            }
                         }
                     }
                     Text(
