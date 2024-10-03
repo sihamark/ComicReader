@@ -1,8 +1,5 @@
 package eu.heha.cyclone.model
 
-import android.graphics.BitmapFactory
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
@@ -11,9 +8,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.util.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,21 +75,6 @@ class ComicRepository(private val httpClient: HttpClient) {
     private fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
         appendPathSegments("$page.html")
     }.buildString()
-
-    suspend fun loadImage(comicUrl: String, imageUrl: String): ImageBitmap {
-        val response = httpClient.get {
-            url(imageUrl)
-            headers {
-                val (name, value) = imageHeader(comicUrl)
-                append(name, value)
-            }
-        }
-        if (!response.status.isSuccess()) {
-            error("failed to load image: $imageUrl, status: ${response.status}")
-        }
-        val bytes = response.bodyAsChannel().toByteArray()
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size).asImageBitmap()
-    }
 
     fun addComic(previewComic: Comic) {
         _comics.value = (_comics.value + previewComic).distinct()
