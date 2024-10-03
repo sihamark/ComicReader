@@ -1,21 +1,20 @@
 package eu.heha.cyclone.model
 
-import androidx.collection.ArrayMap
 import coil3.PlatformContext
-import coil3.imageLoader
+import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
 import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class ReaderController(
     private val platformContext: PlatformContext,
@@ -24,8 +23,31 @@ class ReaderController(
 
     lateinit var comic: ComicRepository.Comic
 
-    private val pagesAsyncLock = ReentrantReadWriteLock()
-    private val pagesAsyncCache = ArrayMap<PageKey, Deferred<Result<ComicRepository.Page>>>()
+    private val writeMutex = Mutex()
+    private val pagesAsyncCache = mutableMapOf<PageKey, Deferred<Result<ComicRepository.Page>>>()
+
+    private fun getPageFromCache(
+        chapter: ComicRepository.Chapter,
+        pageIndex: Int
+    ): Deferred<Result<ComicRepository.Page>>? {
+        return pagesAsyncCache[PageKey(chapter, pageIndex)]
+    }
+
+    private suspend fun putPageInCache(
+        chapter: ComicRepository.Chapter,
+        pageIndex: Int,
+        deferred: Deferred<Result<ComicRepository.Page>>
+    ) {
+        writeMutex.withLock {
+            pagesAsyncCache[PageKey(chapter, pageIndex)] = deferred
+        }
+    }
+
+    private suspend fun removeFromCache(chapter: ComicRepository.Chapter, pageIndex: Int) {
+        writeMutex.withLock {
+            pagesAsyncCache.remove(PageKey(chapter, pageIndex))?.cancel()
+        }
+    }
 
     fun setComic(comicId: String) {
         comic = comicRepository.getComic(comicId)
@@ -117,12 +139,12 @@ class ReaderController(
             .data(imageUrl)
             .addComicHeader(comic.homeUrl)
             .build()
-        platformContext.imageLoader.enqueue(imageRequest)
+        SingletonImageLoader.get(platformContext)
+            .enqueue(imageRequest)
     }
 
     private suspend fun loadFirstPageInChapter(chapter: ComicRepository.Chapter): List<Int> {
-        val pageAsync = pagesAsyncLock
-            .read { pagesAsyncCache[PageKey(chapter, ComicRepository.INITIAL_PAGE)] }
+        val pageAsync = getPageFromCache(chapter, ComicRepository.INITIAL_PAGE)
             ?: loadPage(chapter, ComicRepository.INITIAL_PAGE)
         return pageAsync.await().getOrThrow().listOfPagesInChapter
     }
@@ -131,9 +153,7 @@ class ReaderController(
         chapter: ComicRepository.Chapter,
         pageIndex: Int
     ): Deferred<Result<ComicRepository.Page>> = coroutineScope {
-        val pageAsync = pagesAsyncLock.read {
-            pagesAsyncCache[PageKey(chapter, pageIndex)]
-        }
+        val pageAsync = getPageFromCache(chapter, pageIndex)
         val actualDeferred = if (pageAsync == null) {
             Napier.d("no cached page found, loading page $pageIndex")
             val deferred = async(start = CoroutineStart.LAZY, context = Dispatchers.IO) {
@@ -149,9 +169,8 @@ class ReaderController(
                     Result.failure(e)
                 }
             }
-            pagesAsyncLock.write {
-                pagesAsyncCache[PageKey(chapter, pageIndex)] = deferred
-            }
+
+            putPageInCache(chapter, pageIndex, deferred)
             deferred.start()
             deferred
         } else {
@@ -161,9 +180,7 @@ class ReaderController(
         val pageResult = actualDeferred.await()
         if (pageResult.isFailure) {
             Napier.e { "page loading was unsuccessful, empty cache and try again" }
-            pagesAsyncLock.write {
-                pagesAsyncCache.remove(PageKey(chapter, pageIndex))?.cancel()
-            }
+            removeFromCache(chapter, pageIndex)
             return@coroutineScope loadPage(chapter, pageIndex)
         }
         return@coroutineScope actualDeferred
