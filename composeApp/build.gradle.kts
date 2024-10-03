@@ -112,7 +112,8 @@ android {
         debugImplementation(libs.compose.ui.tooling)
         implementation(libs.compose.material.icons)
 
-
+        implementation(libs.coil)
+        implementation(libs.coil.network)
         implementation(libs.coil.compose)
         implementation(libs.material)
 

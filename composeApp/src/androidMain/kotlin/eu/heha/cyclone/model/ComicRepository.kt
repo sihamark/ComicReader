@@ -3,6 +3,7 @@ package eu.heha.cyclone.model
 import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import coil3.network.NetworkHeaders
 import com.fleeksoft.ksoup.Ksoup
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
@@ -133,5 +134,9 @@ class ComicRepository(private val httpClient: HttpClient) {
 
         fun imageHeader(comicUrl: String): Pair<String, String> =
             HttpHeaders.Referrer to URLBuilder(comicUrl).apply { path() }.buildString()
+
+        fun Pair<String, String>.toHeader() = NetworkHeaders.Builder()
+            .set(first, second)
+            .build()
     }
 }

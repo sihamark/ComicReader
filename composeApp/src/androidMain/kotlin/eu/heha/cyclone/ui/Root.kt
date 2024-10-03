@@ -1,6 +1,7 @@
 package eu.heha.cyclone.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -12,8 +13,9 @@ import org.koin.compose.KoinApplication
 
 @Composable
 fun Root() {
+    val context = LocalContext.current
     KoinApplication(application = {
-        modules(koinModule())
+        modules(koinModule(context))
     }) {
         CycloneTheme {
             val navController = rememberNavController()

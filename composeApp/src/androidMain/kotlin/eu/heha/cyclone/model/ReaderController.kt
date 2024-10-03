@@ -1,6 +1,11 @@
 package eu.heha.cyclone.model
 
 import androidx.collection.ArrayMap
+import coil3.PlatformContext
+import coil3.imageLoader
+import coil3.network.httpHeaders
+import coil3.request.ImageRequest
+import eu.heha.cyclone.model.ComicRepository.Companion.toHeader
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -13,7 +18,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class ReaderController(private val comicRepository: ComicRepository) {
+class ReaderController(
+    private val platformContext: PlatformContext,
+    private val comicRepository: ComicRepository
+) {
 
     lateinit var comic: ComicRepository.Comic
 
@@ -106,12 +114,11 @@ class ReaderController(private val comicRepository: ComicRepository) {
     }
 
     private fun loadImageAsync(imageUrl: String) {
-//        val (name, value) = ComicRepository.imageHeader(comic.homeUrl)
-//        val imageRequest = ImageRequest.Builder(context)
-//            .data(imageUrl)
-//            .addHeader(name, value)
-//            .build()
-//        Coil.imageLoader(context).enqueue(imageRequest)
+        val imageRequest = ImageRequest.Builder(platformContext)
+            .data(imageUrl)
+            .httpHeaders(ComicRepository.imageHeader(comic.homeUrl).toHeader())
+            .build()
+        platformContext.imageLoader.enqueue(imageRequest)
     }
 
     private suspend fun loadFirstPageInChapter(chapter: ComicRepository.Chapter): List<Int> {
@@ -135,7 +142,7 @@ class ReaderController(private val comicRepository: ComicRepository) {
                     Napier.d { "loading page $pageIndex" }
                     val page = comicRepository.loadPage(chapter.url, pageIndex)
                         ?: error("error getting page $pageIndex for chapter ${chapter.title}")
-                    Napier.d { "got page $pageIndex: $page" }
+                    Napier.d { "got page $pageIndex preheat image ${page.imageUrl}" }
                     loadImageAsync(page.imageUrl)
                     Result.success(page)
                 } catch (e: Exception) {
