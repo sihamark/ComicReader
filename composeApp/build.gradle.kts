@@ -44,8 +44,6 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-//            implementation(libs.androidx.lifecycle.viewmodel)
-//            implementation(libs.androidx.lifecycle.runtime.compose)
 
             implementation(libs.lifecycle.viewmodel.compose)
             implementation(libs.navigation.compose)
@@ -115,18 +113,6 @@ android {
     dependencies {
         implementation(libs.androidx.activity)
         implementation(libs.androidx.core)
-        implementation(libs.androidx.lifecycle.lifecycle)
-        implementation(libs.androidx.lifecycle.viewmodel.compose)
-        implementation(libs.androidx.navigation.compose)
-
-        val composeBom = platform(libs.compose.bom)
-        implementation(composeBom)
-
-        implementation(libs.compose.material3)
-        implementation(libs.compose.material.navigation)
-        implementation(libs.compose.ui.tooling.preview)
-        debugImplementation(libs.compose.ui.tooling)
-        implementation(libs.compose.material.icons)
         implementation(libs.material)
 
         debugImplementation(libs.androidx.ui.tooling)
@@ -136,7 +122,7 @@ android {
 
 compose.desktop {
     application {
-        mainClass = "eu.heha.cyclone.MainKt"
+        mainClass = "eu.heha.cyclone.CycloneMainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
