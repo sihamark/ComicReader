@@ -1,6 +1,5 @@
 package eu.heha.cyclone.di
 
-import android.content.Context
 import coil3.ImageLoader
 import coil3.PlatformContext
 import eu.heha.cyclone.model.ComicRepository
@@ -16,8 +15,8 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
-fun koinModule(context: Context): Module = module {
-    single<PlatformContext> { context.applicationContext }
+fun koinModule(platformContext: PlatformContext): Module = module {
+    single<PlatformContext> { platformContext }
     single { HttpClient(CIO) }
     singleOf(::ImageLoader)
     singleOf(::ComicRepository)
