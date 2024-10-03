@@ -12,9 +12,9 @@ import org.koin.core.module.Module
 
 @Composable
 fun Root(koinModule: Module) {
-    KoinApplication(application = {
-        modules(koinModule)
-    }) {
+    KoinApplication(
+        application = { modules(koinModule) }
+    ) {
         CycloneTheme {
             val navController = rememberNavController()
             NavHost(
