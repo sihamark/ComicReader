@@ -33,10 +33,9 @@ import androidx.compose.ui.unit.dp
 import coil3.PlatformContext
 import coil3.compose.AsyncImage
 import coil3.imageLoader
-import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import eu.heha.cyclone.model.ComicRepository
-import eu.heha.cyclone.model.ComicRepository.Companion.toHeader
+import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
 import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.ui.ComicReaderViewModel.State.Loaded
 import io.github.aakira.napier.Napier
@@ -169,9 +168,7 @@ private fun ComicReaderContent(
                                 AsyncImage(
                                     model = ImageRequest.Builder(LocalContext.current)
                                         .data(result.page.imageUrl)
-                                        .httpHeaders(
-                                            ComicRepository.imageHeader(comic.homeUrl).toHeader()
-                                        )
+                                        .addComicHeader(comic.homeUrl)
                                         .build(),
                                     contentDescription = "Page $pageIndex",
                                     imageLoader = platformContext.imageLoader,

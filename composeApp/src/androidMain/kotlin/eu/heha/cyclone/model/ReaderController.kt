@@ -3,9 +3,8 @@ package eu.heha.cyclone.model
 import androidx.collection.ArrayMap
 import coil3.PlatformContext
 import coil3.imageLoader
-import coil3.network.httpHeaders
 import coil3.request.ImageRequest
-import eu.heha.cyclone.model.ComicRepository.Companion.toHeader
+import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -116,7 +115,7 @@ class ReaderController(
     private fun loadImageAsync(imageUrl: String) {
         val imageRequest = ImageRequest.Builder(platformContext)
             .data(imageUrl)
-            .httpHeaders(ComicRepository.imageHeader(comic.homeUrl).toHeader())
+            .addComicHeader(comic.homeUrl)
             .build()
         platformContext.imageLoader.enqueue(imageRequest)
     }

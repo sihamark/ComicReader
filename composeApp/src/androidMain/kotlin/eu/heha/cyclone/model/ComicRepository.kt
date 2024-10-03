@@ -4,6 +4,8 @@ import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import coil3.request.ImageRequest
 import com.fleeksoft.ksoup.Ksoup
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
@@ -135,8 +137,9 @@ class ComicRepository(private val httpClient: HttpClient) {
         fun imageHeader(comicUrl: String): Pair<String, String> =
             HttpHeaders.Referrer to URLBuilder(comicUrl).apply { path() }.buildString()
 
-        fun Pair<String, String>.toHeader() = NetworkHeaders.Builder()
-            .set(first, second)
-            .build()
+        fun ImageRequest.Builder.addComicHeader(comicUrl: String) = apply {
+            val (name, value) = imageHeader(comicUrl)
+            httpHeaders(NetworkHeaders.Builder().set(name, value).build())
+        }
     }
 }

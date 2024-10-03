@@ -28,10 +28,9 @@ import androidx.compose.ui.unit.dp
 import coil3.PlatformContext
 import coil3.compose.AsyncImage
 import coil3.imageLoader
-import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import eu.heha.cyclone.model.ComicRepository
-import eu.heha.cyclone.model.ComicRepository.Companion.toHeader
+import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,7 +88,7 @@ fun ComicItem(comic: ComicRepository.Comic) {
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(comic.coverImageUrl)
-                .httpHeaders(ComicRepository.imageHeader(comic.homeUrl).toHeader())
+                .addComicHeader(comic.homeUrl)
                 .build(),
             contentDescription = null,
             imageLoader = platformContext.imageLoader,
