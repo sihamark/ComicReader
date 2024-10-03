@@ -7,8 +7,6 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.compose)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
 }
 
 kotlin {
@@ -125,8 +123,10 @@ android {
 
         implementation(libs.napier)
 
-        implementation(libs.hilt.android)
-        ksp(libs.hilt.android.compiler)
+        implementation(platform(libs.koin.bom))
+        implementation(libs.koin.core)
+        implementation(libs.koin.compose)
+        implementation(libs.koin.compose.navigation)
 
         testImplementation(kotlin("test"))
         testImplementation(libs.junit)

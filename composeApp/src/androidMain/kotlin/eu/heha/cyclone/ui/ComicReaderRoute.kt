@@ -2,12 +2,12 @@ package eu.heha.cyclone.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ComicReaderRoute(navController: NavController, comicId: String) {
-    val model = hiltViewModel<ComicReaderViewModel>()
+    val model = koinViewModel<ComicReaderViewModel>()
     LaunchedEffect(model) {
         model.loadComic(comicId)
     }
