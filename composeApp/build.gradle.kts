@@ -35,6 +35,10 @@ kotlin {
 
         androidMain.dependencies {
             implementation(compose.preview)
+
+            implementation(libs.androidx.activity)
+            implementation(libs.androidx.core)
+            implementation(libs.material)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -114,10 +118,6 @@ android {
         }
     }
     dependencies {
-        implementation(libs.androidx.activity)
-        implementation(libs.androidx.core)
-        implementation(libs.material)
-
         debugImplementation(libs.androidx.ui.tooling)
         debugImplementation(libs.androidx.ui.test.manifest)
     }
