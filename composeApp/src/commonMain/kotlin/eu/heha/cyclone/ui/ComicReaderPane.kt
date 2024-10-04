@@ -27,12 +27,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.PlatformContext
+import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
-import coil3.imageLoader
 import coil3.request.ImageRequest
 import eu.heha.cyclone.model.ComicRepository
 import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
@@ -166,12 +165,12 @@ private fun ComicReaderContent(
                             is ReaderController.PageResult.Loaded -> {
                                 val platformContext = koinInject<PlatformContext>()
                                 AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
+                                    model = ImageRequest.Builder(platformContext)
                                         .data(result.page.imageUrl)
                                         .addComicHeader(comic.homeUrl)
                                         .build(),
                                     contentDescription = "Page $pageIndex",
-                                    imageLoader = platformContext.imageLoader,
+                                    imageLoader = SingletonImageLoader.get(platformContext),
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }

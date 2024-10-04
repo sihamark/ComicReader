@@ -5,14 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import eu.heha.cyclone.model.ComicRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class AddComicViewModel @Inject constructor(
+class AddComicViewModel(
     private val comicRepository: ComicRepository
 ) : ViewModel() {
     var state by mutableStateOf(State())

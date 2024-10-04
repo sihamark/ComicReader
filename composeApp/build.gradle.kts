@@ -39,12 +39,33 @@ kotlin {
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material)
+            implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-//            implementation(libs.androidx.lifecycle.viewmodel)
-//            implementation(libs.androidx.lifecycle.runtime.compose)
+
+            implementation(libs.lifecycle.viewmodel.compose)
+            implementation(libs.navigation.compose)
+
+            implementation(libs.kotlinx.coroutines)
+
+            implementation(libs.coil)
+            implementation(libs.coil.network)
+            implementation(libs.coil.compose)
+
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
+
+            implementation(libs.ksoup)
+
+            implementation(libs.napier)
+
+            implementation(project.dependencies.platform(libs.koin.bom))
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
+            implementation(libs.koin.compose.viewmodel.navigation)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -80,7 +101,6 @@ android {
         }
     }
     compileOptions {
-        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -91,51 +111,9 @@ android {
         }
     }
     dependencies {
-        implementation(libs.kotlinx.coroutines)
-        testImplementation(libs.junit)
-        coreLibraryDesugaring(libs.core.desugar)
-
         implementation(libs.androidx.activity)
         implementation(libs.androidx.core)
-        implementation(libs.androidx.lifecycle.lifecycle)
-        implementation(libs.androidx.lifecycle.viewmodel.compose)
-        implementation(libs.androidx.navigation.compose)
-        implementation(libs.androidx.hilt.navigation.compose)
-        implementation(libs.androidx.webkit)
-
-        val composeBom = platform(libs.compose.bom)
-        implementation(composeBom)
-
-        implementation(libs.compose.material3)
-        implementation(libs.compose.material.navigation)
-        implementation(libs.compose.ui.tooling.preview)
-        debugImplementation(libs.compose.ui.tooling)
-        implementation(libs.compose.material.icons)
-
-        implementation(libs.coil)
-        implementation(libs.coil.network)
-        implementation(libs.coil.compose)
         implementation(libs.material)
-
-        implementation(libs.ktor.client.core)
-        implementation(libs.ktor.client.cio)
-
-        implementation(libs.ksoup)
-
-        implementation(libs.napier)
-
-        implementation(platform(libs.koin.bom))
-        implementation(libs.koin.core)
-        implementation(libs.koin.compose)
-        implementation(libs.koin.compose.navigation)
-
-        testImplementation(kotlin("test"))
-        testImplementation(libs.junit)
-
-        androidTestImplementation(libs.androidx.test.ext.junit)
-        androidTestImplementation(libs.espresso.core)
-        androidTestImplementation(composeBom)
-        androidTestImplementation(libs.androidx.ui.test.junit4)
 
         debugImplementation(libs.androidx.ui.tooling)
         debugImplementation(libs.androidx.ui.test.manifest)
@@ -144,7 +122,7 @@ android {
 
 compose.desktop {
     application {
-        mainClass = "eu.heha.cyclone.MainKt"
+        mainClass = "eu.heha.cyclone.CycloneMainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

@@ -23,11 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil3.PlatformContext
+import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
-import coil3.imageLoader
 import coil3.request.ImageRequest
 import eu.heha.cyclone.model.ComicRepository
 import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
@@ -83,15 +82,14 @@ fun ComicItem(comic: ComicRepository.Comic) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        val context = LocalContext.current
         val platformContext = koinInject<PlatformContext>()
         AsyncImage(
-            model = ImageRequest.Builder(context)
+            model = ImageRequest.Builder(platformContext)
                 .data(comic.coverImageUrl)
                 .addComicHeader(comic.homeUrl)
                 .build(),
             contentDescription = null,
-            imageLoader = platformContext.imageLoader,
+            imageLoader = SingletonImageLoader.get(platformContext),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
