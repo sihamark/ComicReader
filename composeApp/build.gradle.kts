@@ -71,25 +71,28 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
         }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
     }
 }
 
 android {
-    namespace = "eu.heha.cyclone"
-    compileSdk = 34
+    namespace = AppConfig.groupId
+    compileSdk = AppConfig.targetSdk
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 
     defaultConfig {
-        applicationId = "eu.heha.cyclone"
-        minSdk = 28
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0-alpha01"
+        applicationId = AppConfig.groupId
+        minSdk = AppConfig.minSdk
+        targetSdk = AppConfig.targetSdk
+        versionCode = AppConfig.versionCode
+        versionName = AppConfig.versionName
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = AppConfig.instrumentationRunner
     }
 
     buildTypes {
@@ -126,8 +129,8 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "eu.heha.cyclone"
-            packageVersion = "1.0.0"
+            packageName = AppConfig.groupId
+            packageVersion = AppConfig.versionName
         }
     }
 }
