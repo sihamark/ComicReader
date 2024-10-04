@@ -1,23 +1,102 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.jetbrains.compose)
+}
+
+kotlin {
+    androidTarget {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
+
+    jvm("desktop")
+
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
+
+    sourceSets {
+        val desktopMain by getting
+
+        androidMain.dependencies {
+            implementation(compose.preview)
+
+            implementation(libs.androidx.activity)
+            implementation(libs.androidx.core)
+            implementation(libs.material)
+        }
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
+            implementation(compose.ui)
+            implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
+
+            implementation(libs.lifecycle.viewmodel.compose)
+            implementation(libs.navigation.compose)
+
+            implementation(libs.kotlinx.coroutines)
+
+            implementation(libs.coil)
+            implementation(libs.coil.network)
+            implementation(libs.coil.compose)
+
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
+
+            implementation(libs.ksoup)
+
+            implementation(libs.napier)
+
+            implementation(project.dependencies.platform(libs.koin.bom))
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
+            implementation(libs.koin.compose.viewmodel.navigation)
+        }
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+    }
 }
 
 android {
-    namespace = "eu.heha.cyclone"
-    compileSdk = 35
+    namespace = AppConfig.groupId
+    compileSdk = AppConfig.targetSdk
+
+    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+    sourceSets["main"].res.srcDirs("src/androidMain/res")
+    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 
     defaultConfig {
-        applicationId = "eu.heha.cyclone"
-        minSdk = 28
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0-alpha01"
+        applicationId = AppConfig.groupId
+        minSdk = AppConfig.minSdk
+        targetSdk = AppConfig.targetSdk
+        versionCode = AppConfig.versionCode
+        versionName = AppConfig.versionName
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = AppConfig.instrumentationRunner
     }
 
     buildTypes {
@@ -29,67 +108,29 @@ android {
         }
     }
     compileOptions {
-        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-    buildFeatures {
-        compose = true
-    }
+    buildFeatures.compose = true
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    dependencies {
+        debugImplementation(libs.androidx.ui.tooling)
+        debugImplementation(libs.androidx.ui.test.manifest)
+    }
 }
 
-dependencies {
-    implementation(libs.kotlinx.coroutines)
-    testImplementation(libs.junit)
-    coreLibraryDesugaring(libs.core.desugar)
+compose.desktop {
+    application {
+        mainClass = "eu.heha.cyclone.CycloneMainKt"
 
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.core)
-    implementation(libs.androidx.lifecycle.lifecycle)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.androidx.webkit)
-
-    val composeBom = platform(libs.compose.bom)
-    implementation(composeBom)
-
-    implementation(libs.compose.material3)
-    implementation(libs.compose.material.navigation)
-    implementation(libs.compose.ui.tooling.preview)
-    debugImplementation(libs.compose.ui.tooling)
-    implementation(libs.compose.material.icons)
-
-
-    implementation(libs.coil.compose)
-    implementation(libs.material)
-
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.cio)
-
-    implementation(libs.ksoup)
-
-    implementation(libs.napier)
-
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
-
-    testImplementation(kotlin("test"))
-    testImplementation(libs.junit)
-
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.espresso.core)
-    androidTestImplementation(composeBom)
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = AppConfig.groupId
+            packageVersion = AppConfig.versionName
+        }
+    }
 }
