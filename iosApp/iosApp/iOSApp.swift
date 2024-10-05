@@ -4,7 +4,7 @@ import ComposeApp
 @main
 struct iOSApp: App {
     init() {
-        CycloneApp.initialize()
+        IosCycloneApp.shared.initialize()
     }
     var body: some Scene {
         WindowGroup {
