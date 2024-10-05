@@ -8,6 +8,7 @@ fun main() {
     CycloneApp.initialize(
         Requirements(
             platformContext = PlatformContext.INSTANCE,
+            antilog = Logging.antilog(),
             sqlDriverFactory = { databaseName -> JdbcSqliteDriver("jdbc:sqlite:$databaseName") }
         )
     )

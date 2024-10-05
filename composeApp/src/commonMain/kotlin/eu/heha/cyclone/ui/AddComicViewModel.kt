@@ -24,9 +24,9 @@ class AddComicViewModel(
             state = state.copy(isCheckingComic = true)
             state = state.copy(
                 previewComicResult = try {
-                    Result.success(comicRepository.loadComic(state.comicUrl).also {
-                        Napier.d("loaded comic: $it")
-                    })
+                    val comic = comicRepository.loadComic(state.comicUrl)
+                    Napier.d { "loaded comic '${comic.title}' with ${comic.chapters.size} chapters" }
+                    Result.success(comic)
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
