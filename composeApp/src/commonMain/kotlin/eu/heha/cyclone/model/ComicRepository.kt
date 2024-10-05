@@ -61,7 +61,7 @@ class ComicRepository(private val httpClient: HttpClient) {
             .mapNotNull { it.text().toIntOrNull() }
             .distinct()
 
-        Napier.d { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size}): $pageIndices" }
+        Napier.d { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size})" }
 
         return Page(
             pageIndex = page,
