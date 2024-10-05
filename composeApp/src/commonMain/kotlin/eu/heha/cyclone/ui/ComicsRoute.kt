@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.navOptions
 import eu.heha.cyclone.ui.SimpleNavigationDestination.ADD_COMIC
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -14,7 +15,11 @@ fun ComicsRoute(navController: NavController) {
 
     ComicsPane(
         comics = comics,
-        onClickAddComic = { navController.navigate(ADD_COMIC.route) },
+        onClickAddComic = {
+            navController.navigate(
+                ADD_COMIC.route,
+                navOptions = navOptions { launchSingleTop = true })
+        },
         onClickComic = { navController.navigate(ComicDestination.withId(it.id)) }
     )
 }

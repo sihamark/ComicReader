@@ -10,7 +10,6 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import eu.heha.cyclone.di.koinModule
 import eu.heha.cyclone.ui.Root
 
 class ComicReaderActivity : ComponentActivity() {
@@ -24,7 +23,6 @@ class ComicReaderActivity : ComponentActivity() {
         )
         setContent {
             Root(
-                koinModule = koinModule(applicationContext),
                 colorSchemeOverride = { isDarkTheme ->
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         if (isDarkTheme) {

@@ -5,6 +5,6 @@ import android.app.Application
 class ComicReaderApplication: Application() {
     override fun onCreate() {
         super.onCreate()
-        CycloneApp.initialize()
+        CycloneApp.initialize(Requirements(platformContext = this))
     }
 }
