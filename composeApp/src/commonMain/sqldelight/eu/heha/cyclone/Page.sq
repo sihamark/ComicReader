@@ -1,0 +1,19 @@
+CREATE TABLE Page (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    chapterId INTEGER NOT NULL,
+    pageNumber INTEGER NOT NULL,
+    imageUrl TEXT NOT NULL,
+    FOREIGN KEY (chapterId) REFERENCES Chapter(id) ON DELETE CASCADE
+);
+
+getLatestRowId:
+SELECT last_insert_rowid();
+
+getById:
+SELECT * FROM Page WHERE chapterId = ?;
+
+getAllForChapter:
+SELECT * FROM Page WHERE chapterId = ? ORDER BY pageNumber ASC;
+
+insert:
+INSERT INTO Page (chapterId, pageNumber, imageUrl) VALUES (?, ?, ?);

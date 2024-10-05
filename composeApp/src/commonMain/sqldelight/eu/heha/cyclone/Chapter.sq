@@ -1,0 +1,24 @@
+/**
+* Chapter contains the information of a chapter of a comic.
+* @param numberOfPages: number of pages in this chapter, 0 means that it has not been loaded yet.
+*/
+CREATE TABLE Chapter (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    comicId INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    url TEXT NOT NULL,
+    numberOfPages INTEGER NOT NULL DEFAULT 0 CHECK (numberOfPages >= 0),
+    FOREIGN KEY (comicId) REFERENCES Comic(id) ON DELETE CASCADE
+);
+
+getLatestRowId:
+SELECT last_insert_rowid();
+
+getById:
+SELECT * FROM Chapter WHERE id = ?;
+
+getAllForComic:
+SELECT * FROM Chapter WHERE comicId = ?;
+
+insert:
+INSERT INTO Chapter (comicId, title, url) VALUES (?, ?, ?);

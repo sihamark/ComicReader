@@ -1,8 +1,9 @@
 package eu.heha.cyclone
 
+import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import coil3.PlatformContext
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.darwin.Darwin
+import io.ktor.client.*
+import io.ktor.client.engine.darwin.*
 
 /**
  * This object is used to initialize the CycloneApp on iOS.
@@ -15,7 +16,10 @@ object IosCycloneApp {
         CycloneApp.initialize(
             Requirements(
                 platformContext = PlatformContext.INSTANCE,
-                httpClientFactory = { HttpClient(Darwin) }
+                httpClientFactory = { HttpClient(Darwin) },
+                sqlDriverFactory = { databaseName ->
+                    NativeSqliteDriver(schema = Database.Schema, name = databaseName)
+                }
             )
         )
     }
