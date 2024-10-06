@@ -25,8 +25,8 @@ class ReaderController(
 ) {
 
     lateinit var comicAndChapters: ComicAndChapters
-    val comic get() = comicAndChapters.first
-    val chapters get() = comicAndChapters.second
+    private val comic get() = comicAndChapters.first
+    private val chapters get() = comicAndChapters.second
 
     private val writeMutex = Mutex()
     private val pagesAsyncCache = mutableMapOf<PageKey, Deferred<Result<Page>>>()
