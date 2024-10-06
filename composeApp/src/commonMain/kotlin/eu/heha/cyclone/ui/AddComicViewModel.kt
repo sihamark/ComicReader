@@ -50,7 +50,7 @@ class AddComicViewModel(
             checkNotNull(previewComic) { "previewComic must not be null, was ${state.previewComicResult}" }
             state = state.copy(progress = Progress.AddingComic)
             val result = comicRepository.addComic(previewComic)
-            Napier.d { "add comic result: $result" }
+            Napier.d { "add comic result: ${result::class.simpleName}" }
             state = state.copy(addComicResult = result, progress = null)
         }
     }

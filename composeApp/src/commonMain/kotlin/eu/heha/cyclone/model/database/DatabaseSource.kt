@@ -35,12 +35,6 @@ class DatabaseSource(
         .asFlow()
         .mapToList(Dispatchers.IO)
 
-    suspend fun countChaptersForComic(comicId: Long): Long = withContext(Dispatchers.IO) {
-        database.chapterQueries
-            .countForComic(comicId)
-            .executeAsOne()
-    }
-
     suspend fun isComicInDatabase(comic: Comic): Boolean = withContext(Dispatchers.IO) {
         database.comicQueries.doesExist(comic.homeUrl).executeAsOne()
     }
@@ -86,11 +80,18 @@ class DatabaseSource(
         ).executeAsOneOrNull()
     }
 
+    suspend fun updateNumberOfPages(chapter: Chapter, numberOfPages: Int) =
+        withContext(Dispatchers.IO) {
+            database.chapterQueries.updateNumberOfPages(
+                numberOfPages = numberOfPages.toLong(),
+                id = chapter.id
+            )
+        }
+
     suspend fun addPage(
-        chapter: Chapter, numberOfPages: Int, page: Page
+        chapter: Chapter, page: Page
     ): Page = withContext(Dispatchers.IO) {
         database.transactionWithResult {
-            database.chapterQueries.updateNumberOfPages(chapter.id, numberOfPages.toLong())
             database.pageQueries.insert(
                 chapterId = chapter.id,
                 pageNumber = page.pageNumber,

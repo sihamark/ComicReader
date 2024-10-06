@@ -3,7 +3,8 @@ CREATE TABLE Page (
     chapterId INTEGER NOT NULL,
     pageNumber INTEGER NOT NULL,
     imageUrl TEXT NOT NULL,
-    FOREIGN KEY (chapterId) REFERENCES Chapter(id) ON DELETE CASCADE
+    FOREIGN KEY (chapterId) REFERENCES Chapter(id) ON DELETE CASCADE,
+    UNIQUE (chapterId, pageNumber)
 );
 
 getLatestRowId:

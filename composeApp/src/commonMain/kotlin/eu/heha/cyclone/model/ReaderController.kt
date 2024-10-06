@@ -148,7 +148,6 @@ class ReaderController(
                 try {
                     Napier.d { "loading page $pageIndex" }
                     val page = comicRepository.loadPage(chapter, pageIndex)
-                        ?: error("error getting page $pageIndex for chapter ${chapter.title}")
                     Napier.d { "got page $pageIndex preheat image ${page.imageUrl}" }
                     loadImageAsync(page.imageUrl)
                     Result.success(page)

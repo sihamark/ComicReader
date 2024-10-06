@@ -1,6 +1,7 @@
 package eu.heha.cyclone.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -13,6 +14,13 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ComicsRoute(navController: NavController) {
     val model = koinViewModel<ComicsViewModel>()
     val comics by model.comics.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    LaunchedEffect(comics) {
+        comics.forEach { (comic, chapters) ->
+            val numberOfPages = chapters.firstOrNull()?.numberOfPages
+            Napier.d { "comic: $comic first chapter: $numberOfPages" }
+        }
+    }
 
     ComicsPane(
         comics = comics,

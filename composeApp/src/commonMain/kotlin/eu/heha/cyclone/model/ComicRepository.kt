@@ -4,6 +4,7 @@ import eu.heha.cyclone.database.Chapter
 import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.database.Page
 import eu.heha.cyclone.model.database.DatabaseSource
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 
@@ -81,14 +82,16 @@ class ComicRepository(
         numberOfPages = 0
     )
 
-    suspend fun loadPage(chapter: Chapter, pageNumber: Long): Page? {
+    suspend fun loadPage(chapter: Chapter, pageNumber: Long): Page {
         val existingPage = databaseSource.getPage(chapter, pageNumber)
-        if (existingPage != null) return existingPage
+        if (chapter.numberOfPages != 0L && existingPage != null) return existingPage
 
+        Napier.e { "started loading remote page $pageNumber for ${chapter.title} " }
         val remotePage = remoteSource.loadPage(chapter.url, pageNumber)
+        databaseSource.updateNumberOfPages(chapter, remotePage.listOfPagesInChapter.size)
+        if (existingPage != null) return existingPage
         val newPage = databaseSource.addPage(
             chapter = chapter,
-            numberOfPages = remotePage.listOfPagesInChapter.size,
             page = remotePage.toPage(chapter)
         )
         return newPage
@@ -110,9 +113,4 @@ class ComicRepository(
             "Naruto" to "https://www.mangatown.com/manga/naruto/"
         )
     }
-
-    data class ComicWithChapterCount(
-        val value: Comic,
-        val chapterCount: Long
-    )
 }
