@@ -14,9 +14,10 @@ enum class SimpleNavigationDestination(override val route: String) : NavigationD
 data object ComicDestination : NavigationDestination {
     private const val ID = "id"
 
-    override val route: String = withId("{id}")
+    override val route: String = routeFormat("{id}")
 
-    fun withId(id: String) = "comic/$id"
+    private fun routeFormat(id: Any) = "comic/$id"
+    fun withId(id: Long) = routeFormat(id)
     fun getId(entry: NavBackStackEntry): String =
         entry.arguments?.getString(ID) ?: throw IllegalArgumentException("No ID found in $entry")
 }

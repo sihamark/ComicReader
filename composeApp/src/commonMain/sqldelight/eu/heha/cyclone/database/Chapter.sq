@@ -1,3 +1,5 @@
+import java.time.LocalDate;
+
 /**
 * Chapter contains the information of a chapter of a comic.
 * @param numberOfPages: number of pages in this chapter, 0 means that it has not been loaded yet.
@@ -7,6 +9,8 @@ CREATE TABLE Chapter (
     comicId INTEGER NOT NULL,
     title TEXT NOT NULL,
     url TEXT NOT NULL,
+    orderIndex INTEGER NOT NULL,
+    releaseDate INTEGER AS LocalDate NOT NULL,
     numberOfPages INTEGER NOT NULL DEFAULT 0 CHECK (numberOfPages >= 0),
     FOREIGN KEY (comicId) REFERENCES Comic(id) ON DELETE CASCADE
 );
@@ -18,7 +22,10 @@ getById:
 SELECT * FROM Chapter WHERE id = ?;
 
 getAllForComic:
-SELECT * FROM Chapter WHERE comicId = ?;
+SELECT * FROM Chapter WHERE comicId = ? ORDER BY orderIndex;
+
+countForComic:
+SELECT COUNT(*) FROM Chapter WHERE comicId = ?;
 
 insert:
-INSERT INTO Chapter (comicId, title, url) VALUES (?, ?, ?);
+INSERT INTO Chapter (comicId, title, url, releaseDate, orderIndex) VALUES (?, ?,?, ?, ?);

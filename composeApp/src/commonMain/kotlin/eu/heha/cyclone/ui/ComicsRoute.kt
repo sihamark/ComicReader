@@ -11,7 +11,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ComicsRoute(navController: NavController) {
     val model = koinViewModel<ComicsViewModel>()
-    val comics by model.comics.collectAsStateWithLifecycle()
+    val comics by model.comics.collectAsStateWithLifecycle(initialValue = emptyList())
 
     ComicsPane(
         comics = comics,

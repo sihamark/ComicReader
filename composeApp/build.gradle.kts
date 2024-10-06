@@ -56,6 +56,7 @@ kotlin {
             implementation(libs.navigation.compose)
 
             implementation(libs.kotlinx.coroutines)
+            implementation(libs.kotlinx.datetime)
 
             implementation(libs.coil)
             implementation(libs.coil.network)
@@ -91,7 +92,7 @@ kotlin {
 sqldelight {
     databases {
         create("Database") {
-            packageName.set("eu.heha.cyclone")
+            packageName.set("eu.heha.cyclone.database")
         }
     }
 }

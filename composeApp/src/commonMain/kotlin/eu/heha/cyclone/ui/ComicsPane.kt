@@ -28,16 +28,17 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import eu.heha.cyclone.model.ComicRepository
-import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
+import eu.heha.cyclone.database.Comic
+import eu.heha.cyclone.model.ComicAndChapters
+import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComicsPane(
-    comics: List<ComicRepository.Comic>,
+    comics: List<ComicAndChapters>,
     onClickAddComic: () -> Unit,
-    onClickComic: (ComicRepository.Comic) -> Unit
+    onClickComic: (Comic) -> Unit
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -61,7 +62,7 @@ fun ComicsPane(
                 LazyColumn {
                     items(comics) { comic ->
                         Surface(
-                            onClick = { onClickComic(comic) },
+                            onClick = { onClickComic(comic.first) },
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier.padding(8.dp)
                         ) {
@@ -75,7 +76,8 @@ fun ComicsPane(
 }
 
 @Composable
-fun ComicItem(comic: ComicRepository.Comic) {
+fun ComicItem(comicAndChapters: ComicAndChapters) {
+    val (comic, chapters) = comicAndChapters
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -101,7 +103,7 @@ fun ComicItem(comic: ComicRepository.Comic) {
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "${comic.chapters.size} Chapters",
+            text = "${chapters.size} Chapters",
             style = MaterialTheme.typography.bodyMedium
         )
     }

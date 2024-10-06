@@ -3,6 +3,7 @@ android-gradle-plugin = "8.5.2" #downgraded to ensure compatibility with multipl
 
 kotlin = "2.0.20"
 kotlinx-coroutines = "1.9.0"
+kotlinx-datetime = "0.6.1"
 
 androidx-core = "1.13.1"
 androidx-activity = "1.9.2"
@@ -27,6 +28,8 @@ ksoup = "0.1.8"
 [libraries]
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
 androidx-activity = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
