@@ -15,6 +15,12 @@ CREATE TABLE Chapter (
     FOREIGN KEY (comicId) REFERENCES Comic(id) ON DELETE CASCADE
 );
 
+insert:
+INSERT INTO Chapter (comicId, title, url, releaseDate, orderIndex) VALUES (?, ?,?, ?, ?);
+
+updateNumberOfPages:
+UPDATE Chapter SET numberOfPages = ? WHERE id = ?;
+
 getLatestRowId:
 SELECT last_insert_rowid();
 
@@ -27,5 +33,3 @@ SELECT * FROM Chapter WHERE comicId = ? ORDER BY orderIndex;
 countForComic:
 SELECT COUNT(*) FROM Chapter WHERE comicId = ?;
 
-insert:
-INSERT INTO Chapter (comicId, title, url, releaseDate, orderIndex) VALUES (?, ?,?, ?, ?);

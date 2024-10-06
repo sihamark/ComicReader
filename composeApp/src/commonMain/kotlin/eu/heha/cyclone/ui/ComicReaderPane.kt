@@ -47,9 +47,9 @@ import org.koin.compose.koinInject
 fun ComicReaderPane(
     comicAndChapters: ComicAndChapters,
     state: ComicReaderViewModel.State,
-    pageState: Map<Int, ReaderController.PageResult>,
-    onLoadPage: (Int) -> Unit,
-    onProgress: (Int) -> Unit,
+    pageState: Map<Long, ReaderController.PageResult>,
+    onLoadPage: (Long) -> Unit,
+    onProgress: (Long) -> Unit,
     onClickBack: () -> Unit,
     onClickPreviousChapter: () -> Unit,
     onClickNextChapter: () -> Unit
@@ -117,10 +117,10 @@ private fun ComicReaderError(message: String) {
 private fun ComicReaderContent(
     comic: Comic,
     chapter: Chapter,
-    pages: List<Int>,
-    pageState: Map<Int, ReaderController.PageResult>,
-    onLoadPage: (Int) -> Unit,
-    onProgress: (Int) -> Unit
+    pages: LongRange,
+    pageState: Map<Long, ReaderController.PageResult>,
+    onLoadPage: (Long) -> Unit,
+    onProgress: (Long) -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -132,7 +132,7 @@ private fun ComicReaderContent(
         }
         LaunchedEffect(listState) {
             snapshotFlow { listState.firstVisibleItemIndex }.collect { index ->
-                val page = pages[index]
+                val page = pages.first + index
                 Napier.e { "first visible page: $page" }
                 onProgress(page)
             }
@@ -141,7 +141,7 @@ private fun ComicReaderContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             state = listState
         ) {
-            items(pages) { pageIndex ->
+            items(pages.toList()) { pageIndex ->
                 val result = pageState[pageIndex]!!
                 LaunchedEffect(pageIndex) {
                     onLoadPage(pageIndex)

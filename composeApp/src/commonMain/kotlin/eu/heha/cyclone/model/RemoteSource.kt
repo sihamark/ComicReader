@@ -5,15 +5,10 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.fleeksoft.ksoup.Ksoup
 import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.URLBuilder
-import io.ktor.http.URLProtocol
-import io.ktor.http.appendPathSegments
-import io.ktor.http.path
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
@@ -72,13 +67,10 @@ class RemoteSource(
         )
     }
 
-    suspend fun loadPage(chapterUrl: String, page: Int = INITIAL_PAGE): Page? {
+    suspend fun loadPage(chapterUrl: String, page: Long = INITIAL_PAGE): Page {
         check(page >= INITIAL_PAGE) { "page must be >= $INITIAL_PAGE" }
         val pageUrl = getPageUrl(chapterUrl, page)
         val response = httpClient.get(pageUrl)
-        if (response.status == HttpStatusCode.NotFound) {
-            return null
-        }
         val pageDocument = Ksoup.parse(response.body<String>())
         val imageUrl = pageDocument.select("div#viewer img").attr("src")
 
@@ -89,7 +81,7 @@ class RemoteSource(
         Napier.d { "page url: $pageUrl image url: $imageUrl, indices(${pageIndices.size})" }
 
         return Page(
-            pageIndex = page,
+            pageNumber = page,
             imageUrl = URLBuilder(imageUrl)
                 .apply { protocol = URLProtocol.HTTPS }
                 .buildString(),
@@ -97,7 +89,7 @@ class RemoteSource(
         )
     }
 
-    private fun getPageUrl(chapterUrl: String, page: Int) = URLBuilder(chapterUrl).apply {
+    private fun getPageUrl(chapterUrl: String, page: Long) = URLBuilder(chapterUrl).apply {
         appendPathSegments("$page.html")
     }.buildString()
 
@@ -120,13 +112,13 @@ class RemoteSource(
     )
 
     data class Page(
-        val pageIndex: Int,
+        val pageNumber: Long,
         val imageUrl: String,
         val listOfPagesInChapter: List<Int>
     )
 
     companion object {
-        const val INITIAL_PAGE = 1
+        const val INITIAL_PAGE = 1L
 
         private fun imageHeader(comicUrl: String): Pair<String, String> =
             HttpHeaders.Referrer to URLBuilder(comicUrl).apply { path() }.buildString()

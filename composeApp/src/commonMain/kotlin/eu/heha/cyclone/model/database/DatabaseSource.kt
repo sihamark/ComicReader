@@ -6,6 +6,7 @@ import app.cash.sqldelight.db.SqlDriver
 import eu.heha.cyclone.database.Chapter
 import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.database.Database
+import eu.heha.cyclone.database.Page
 import eu.heha.cyclone.model.ComicAndChapters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -70,5 +71,37 @@ class DatabaseSource(
 
     suspend fun getChaptersOfComic(comicId: Long): List<Chapter> = withContext(Dispatchers.IO) {
         database.chapterQueries.getAllForComic(comicId).executeAsList()
+    }
+
+    suspend fun getComicAndChapters(comicId: Long): ComicAndChapters = withContext(Dispatchers.IO) {
+        val comic = database.comicQueries.getById(comicId).executeAsOne()
+        val chapters = database.chapterQueries.getAllForComic(comicId).executeAsList()
+        comic to chapters
+    }
+
+    suspend fun getPage(chapter: Chapter, pageNumber: Long): Page? = withContext(Dispatchers.IO) {
+        database.pageQueries.getByChapterAndPageNumber(
+            chapterId = chapter.id,
+            pageNumber = pageNumber
+        ).executeAsOneOrNull()
+    }
+
+    suspend fun addPage(
+        chapter: Chapter, numberOfPages: Int, page: Page
+    ): Page = withContext(Dispatchers.IO) {
+        database.transactionWithResult {
+            database.chapterQueries.updateNumberOfPages(chapter.id, numberOfPages.toLong())
+            database.pageQueries.insert(
+                chapterId = chapter.id,
+                pageNumber = page.pageNumber,
+                imageUrl = page.imageUrl
+            )
+            val pageId = database.pageQueries.getLatestRowId().executeAsOne()
+            database.pageQueries.getById(pageId).executeAsOne()
+        }
+    }
+
+    suspend fun getChapter(id: Long): Chapter = withContext(Dispatchers.IO) {
+        database.chapterQueries.getById(id).executeAsOne()
     }
 }

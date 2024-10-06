@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import eu.heha.cyclone.database.Chapter
 import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
+import eu.heha.cyclone.model.RemoteSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -22,34 +23,34 @@ class ComicReaderViewModel(
     var state: State by mutableStateOf(State.Loading)
         private set
 
-    var pageState = mutableStateMapOf<Int, ReaderController.PageResult>()
+    var pageState = mutableStateMapOf<Long, ReaderController.PageResult>()
         private set
 
     private fun requireComic() = comicAndChapters ?: error("comic not loaded")
     private fun requireChapter() = (state as? State.Loaded)?.chapter ?: error("chapter not loaded")
 
-    private val pageJobCache = mutableMapOf<Int, Job>()
+    private val pageJobCache = mutableMapOf<Long, Job>()
 
-    fun loadComic(comicId: String) {
-        readerController.setComic(comicId)
-        comicAndChapters = readerController.comicAndChapters
+    fun loadComic(comicId: Long) {
         viewModelScope.launch {
+            readerController.setComic(comicId)
+            comicAndChapters = readerController.comicAndChapters
             val result = readerController.loadComic()
             setState(result)
         }
     }
 
-    fun loadPageState(pageIndex: Int) {
-        pageJobCache[pageIndex]?.cancel()
-        pageJobCache[pageIndex] = viewModelScope.launch {
+    fun loadPageState(pageNumber: Long) {
+        pageJobCache[pageNumber]?.cancel()
+        pageJobCache[pageNumber] = viewModelScope.launch {
             val chapter = requireChapter()
-            readerController.getPage(chapter, pageIndex).collect { pageResult ->
-                pageState[pageIndex] = pageResult
+            readerController.getPage(chapter, pageNumber).collect { pageResult ->
+                pageState[pageNumber] = pageResult
             }
         }
     }
 
-    fun setProgress(pageIndex: Int) {
+    fun setProgress(pageIndex: Long) {
         viewModelScope.launch {
             val chapter = requireChapter()
             readerController.setProgress(chapter, pageIndex)
@@ -73,21 +74,25 @@ class ComicReaderViewModel(
         }
     }
 
-    private fun setState(result: ReaderController.ChapterContentResult) {
-        result.pagesInChapter.forEach {
+    private fun setState(chapter: Chapter) {
+        val pagesInChapter = chapter.pagesInChapter
+        pagesInChapter.forEach {
             pageState += it to ReaderController.PageResult.Loading
         }
         state = State.Loaded(
-            chapter = result.chapter,
-            pages = result.pagesInChapter
+            chapter = chapter,
+            pages = pagesInChapter
         )
     }
+
+    private val Chapter.pagesInChapter
+        get() = (RemoteSource.INITIAL_PAGE..numberOfPages)
 
     sealed interface State {
         data object Loading : State
         data class Loaded(
             val chapter: Chapter,
-            val pages: List<Int>,
+            val pages: LongRange,
         ) : State
 
         data class Error(val message: String) : State

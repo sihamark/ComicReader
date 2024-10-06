@@ -6,7 +6,7 @@ import androidx.navigation.NavController
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun ComicReaderRoute(navController: NavController, comicId: String) {
+fun ComicReaderRoute(navController: NavController, comicId: Long) {
     val model = koinViewModel<ComicReaderViewModel>()
     LaunchedEffect(model) {
         model.loadComic(comicId)
@@ -17,11 +17,11 @@ fun ComicReaderRoute(navController: NavController, comicId: String) {
             comicAndChapters = comicAndChapters,
             state = model.state,
             pageState = model.pageState,
-            onLoadPage = { pageIndex -> model.loadPageState(pageIndex) },
-            onProgress = { pageIndex -> model.setProgress(pageIndex) },
-            onClickBack = { navController.popBackStack() },
-            onClickPreviousChapter = { model.loadPreviousChapter() },
-            onClickNextChapter = { model.loadNextChapter() }
+            onLoadPage = model::loadPageState,
+            onProgress = model::setProgress,
+            onClickBack = navController::popBackStack,
+            onClickPreviousChapter = model::loadPreviousChapter,
+            onClickNextChapter = model::loadNextChapter
         )
     }
 }

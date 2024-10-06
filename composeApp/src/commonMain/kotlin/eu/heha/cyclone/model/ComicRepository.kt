@@ -50,8 +50,8 @@ class ComicRepository(
         ) : AddComicResult()
     }
 
-    suspend fun getComicAndChapters(comicId: String): ComicAndChapters = TODO()
-    //_comics.value.find { it.id == comicId } ?: error("no comic with id '$comicId' found")
+    suspend fun getComicAndChapters(comicId: Long): ComicAndChapters =
+        databaseSource.getComicAndChapters(comicId)
 
     suspend fun loadComic(comicUrl: String): ComicAndChapters {
         val remoteComic = remoteSource.loadComic(comicUrl)
@@ -81,9 +81,27 @@ class ComicRepository(
         numberOfPages = 0
     )
 
-    fun loadPage(url: String, pageIndex: Int): Page? {
-        TODO("Not yet implemented")
+    suspend fun loadPage(chapter: Chapter, pageNumber: Long): Page? {
+        val existingPage = databaseSource.getPage(chapter, pageNumber)
+        if (existingPage != null) return existingPage
+
+        val remotePage = remoteSource.loadPage(chapter.url, pageNumber)
+        val newPage = databaseSource.addPage(
+            chapter = chapter,
+            numberOfPages = remotePage.listOfPagesInChapter.size,
+            page = remotePage.toPage(chapter)
+        )
+        return newPage
     }
+
+    private fun RemoteSource.Page.toPage(chapter: Chapter) = Page(
+        pageNumber = pageNumber,
+        imageUrl = imageUrl,
+        chapterId = chapter.id,
+        id = -1
+    )
+
+    suspend fun getChapter(id: Long): Chapter = databaseSource.getChapter(id)
 
     companion object {
         fun dummyComics() = listOf(
