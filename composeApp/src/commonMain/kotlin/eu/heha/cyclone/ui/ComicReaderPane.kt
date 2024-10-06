@@ -33,9 +33,11 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import eu.heha.cyclone.model.ComicRepository
-import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
+import eu.heha.cyclone.database.Chapter
+import eu.heha.cyclone.database.Comic
+import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
+import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.ui.ComicReaderViewModel.State.Loaded
 import io.github.aakira.napier.Napier
 import org.koin.compose.koinInject
@@ -43,7 +45,7 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComicReaderPane(
-    comic: ComicRepository.Comic,
+    comicAndChapters: ComicAndChapters,
     state: ComicReaderViewModel.State,
     pageState: Map<Int, ReaderController.PageResult>,
     onLoadPage: (Int) -> Unit,
@@ -52,6 +54,7 @@ fun ComicReaderPane(
     onClickPreviousChapter: () -> Unit,
     onClickNextChapter: () -> Unit
 ) {
+    val (comic, chapters) = comicAndChapters
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
@@ -66,13 +69,13 @@ fun ComicReaderPane(
                 actions = {
                     if (state is Loaded) {
                         IconButton(
-                            enabled = comic.chapters.first() != state.chapter,
+                            enabled = chapters.first() != state.chapter,
                             onClick = onClickPreviousChapter
                         ) {
                             Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Chapter")
                         }
                         IconButton(
-                            enabled = comic.chapters.last() != state.chapter,
+                            enabled = chapters.last() != state.chapter,
                             onClick = onClickNextChapter
                         ) {
                             Icon(Icons.Default.ChevronRight, contentDescription = "Next Chapter")
@@ -112,8 +115,8 @@ private fun ComicReaderError(message: String) {
 
 @Composable
 private fun ComicReaderContent(
-    comic: ComicRepository.Comic,
-    chapter: ComicRepository.Chapter,
+    comic: Comic,
+    chapter: Chapter,
     pages: List<Int>,
     pageState: Map<Int, ReaderController.PageResult>,
     onLoadPage: (Int) -> Unit,

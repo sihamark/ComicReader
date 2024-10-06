@@ -67,58 +67,84 @@ fun AddComicPane(
                     Spacer(Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text)
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClickCancelProgress) {
-                            Text("Cancel")
+                        if (state.progress?.isCancellable == true) {
+                            Spacer(Modifier.width(8.dp))
+                            TextButton(onClickCancelProgress) {
+                                Text("Cancel")
+                            }
                         }
                     }
                 }
             }
-            OutlinedTextField(
-                value = state.comicUrl,
-                onValueChange = onComicUrlChange,
-                enabled = state.progress == null,
-                label = { Text("Comic URL") },
-                modifier = Modifier.fillMaxWidth()
+
+            Content(
+                state = state,
+                onComicUrlChange = onComicUrlChange,
+                onClickCheckComic = onClickCheckComic,
+                onClickAddComic = onClickAddComic
             )
+        }
+    }
+}
 
-            Spacer(Modifier.height(16.dp))
+@Composable
+private fun Content(
+    state: AddComicViewModel.State,
+    onComicUrlChange: (String) -> Unit,
+    onClickCheckComic: () -> Unit,
+    onClickAddComic: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 32.dp)
+    ) {
+        OutlinedTextField(
+            value = state.comicUrl,
+            onValueChange = onComicUrlChange,
+            enabled = state.progress == null,
+            label = { Text("Comic URL") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            Button(
-                enabled = state.progress == null && state.comicUrl.isNotBlank(),
-                onClick = onClickCheckComic
-            ) {
-                Text("Check Comic")
-            }
+        Spacer(Modifier.height(16.dp))
 
-            AnimatedContent(
-                targetState = state.previewComicResult,
-                contentAlignment = Alignment.Center
-            ) { previewComicResult ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    previewComicResult?.getOrNull()?.also { previewComic ->
-                        Spacer(Modifier.height(16.dp))
-                        Text("Comic Preview:")
-                        Spacer(Modifier.height(8.dp))
-                        ComicItem(previewComic)
-                        Spacer(Modifier.height(8.dp))
-                        Button(
-                            enabled = state.progress == null,
-                            onClick = onClickAddComic
-                        ) {
-                            Text("Add Comic")
-                        }
+        Button(
+            enabled = state.progress == null && state.comicUrl.isNotBlank(),
+            onClick = onClickCheckComic
+        ) {
+            Text("Check Comic")
+        }
+
+        AnimatedContent(
+            targetState = state.previewComicResult,
+            contentAlignment = Alignment.Center
+        ) { previewComicResult ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                previewComicResult?.getOrNull()?.also { previewComic ->
+                    Spacer(Modifier.height(16.dp))
+                    Text("Comic Preview:")
+                    Spacer(Modifier.height(8.dp))
+                    ComicItem(previewComic)
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        enabled = state.progress == null,
+                        onClick = onClickAddComic
+                    ) {
+                        Text("Add Comic")
                     }
+                }
 
-                    previewComicResult?.exceptionOrNull()?.also { exception ->
-                        Spacer(Modifier.height(16.dp))
-                        Text("Failed to load comic: ${exception.message}")
-                        OutlinedButton(
-                            enabled = state.progress == null,
-                            onClick = onClickCheckComic
-                        ) {
-                            Text("Retry")
-                        }
+                previewComicResult?.exceptionOrNull()?.also { exception ->
+                    Spacer(Modifier.height(16.dp))
+                    Text("Failed to load comic: ${exception.message}")
+                    OutlinedButton(
+                        enabled = state.progress == null,
+                        onClick = onClickCheckComic
+                    ) {
+                        Text("Retry")
                     }
                 }
             }

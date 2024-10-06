@@ -2,6 +2,7 @@ package eu.heha.cyclone.model
 
 import eu.heha.cyclone.database.Chapter
 import eu.heha.cyclone.database.Comic
+import eu.heha.cyclone.database.Page
 import eu.heha.cyclone.model.database.DatabaseSource
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
@@ -26,11 +27,11 @@ class ComicRepository(
         if (databaseSource.isComicInDatabase(comic)) {
             return AddComicResult.ComicAlreadyExists(previewComic)
         }
-        try {
+        return try {
             val comicId = databaseSource.addComic(previewComic)
-            return AddComicResult.Success(previewComic, comicId)
+            AddComicResult.Success(previewComic, comicId)
         } catch (e: Exception) {
-            return AddComicResult.Failure(previewComic, e)
+            AddComicResult.Failure(previewComic, e)
         }
     }
 
@@ -49,7 +50,7 @@ class ComicRepository(
         ) : AddComicResult()
     }
 
-    suspend fun getComic(comicId: String): ComicAndChapters = TODO()
+    suspend fun getComicAndChapters(comicId: String): ComicAndChapters = TODO()
     //_comics.value.find { it.id == comicId } ?: error("no comic with id '$comicId' found")
 
     suspend fun loadComic(comicUrl: String): ComicAndChapters {
@@ -79,6 +80,10 @@ class ComicRepository(
         comicId = -1,
         numberOfPages = 0
     )
+
+    fun loadPage(url: String, pageIndex: Int): Page? {
+        TODO("Not yet implemented")
+    }
 
     companion object {
         fun dummyComics() = listOf(

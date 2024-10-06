@@ -1,4 +1,4 @@
-import java.time.LocalDate;
+import kotlinx.datetime.LocalDate;
 
 /**
 * Chapter contains the information of a chapter of a comic.

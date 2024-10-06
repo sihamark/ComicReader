@@ -11,10 +11,10 @@ fun ComicReaderRoute(navController: NavController, comicId: String) {
     LaunchedEffect(model) {
         model.loadComic(comicId)
     }
-    val comic = model.comic
-    if (comic != null) {
+    val comicAndChapters = model.comicAndChapters
+    if (comicAndChapters != null) {
         ComicReaderPane(
-            comic = comic,
+            comicAndChapters = comicAndChapters,
             state = model.state,
             pageState = model.pageState,
             onLoadPage = { pageIndex -> model.loadPageState(pageIndex) },

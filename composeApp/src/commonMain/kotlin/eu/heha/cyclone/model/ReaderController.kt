@@ -3,7 +3,10 @@ package eu.heha.cyclone.model
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
-import eu.heha.cyclone.model.ComicRepository.Companion.addComicHeader
+import eu.heha.cyclone.database.Chapter
+import eu.heha.cyclone.database.Page
+import eu.heha.cyclone.model.RemoteSource.Companion.INITIAL_PAGE
+import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -21,45 +24,47 @@ class ReaderController(
     private val comicRepository: ComicRepository
 ) {
 
-    lateinit var comic: ComicRepository.Comic
+    lateinit var comicAndChapters: ComicAndChapters
 
     private val writeMutex = Mutex()
-    private val pagesAsyncCache = mutableMapOf<PageKey, Deferred<Result<ComicRepository.Page>>>()
+    private val pagesAsyncCache = mutableMapOf<PageKey, Deferred<Result<Page>>>()
 
     private fun getPageFromCache(
-        chapter: ComicRepository.Chapter,
+        chapter: Chapter,
         pageIndex: Int
-    ): Deferred<Result<ComicRepository.Page>>? {
+    ): Deferred<Result<Page>>? {
         return pagesAsyncCache[PageKey(chapter, pageIndex)]
     }
 
     private suspend fun putPageInCache(
-        chapter: ComicRepository.Chapter,
+        chapter: Chapter,
         pageIndex: Int,
-        deferred: Deferred<Result<ComicRepository.Page>>
+        deferred: Deferred<Result<Page>>
     ) {
         writeMutex.withLock {
             pagesAsyncCache[PageKey(chapter, pageIndex)] = deferred
         }
     }
 
-    private suspend fun removeFromCache(chapter: ComicRepository.Chapter, pageIndex: Int) {
+    private suspend fun removeFromCache(chapter: Chapter, pageIndex: Int) {
         writeMutex.withLock {
             pagesAsyncCache.remove(PageKey(chapter, pageIndex))?.cancel()
         }
     }
 
     fun setComic(comicId: String) {
-        comic = comicRepository.getComic(comicId)
+        TODO()
+//        comicAndChapters = comicRepository.getComicAndChapters(comicId)
     }
 
     suspend fun loadComic(): ChapterContentResult {
-        Napier.d { "got comic '${comic.title}'" }
-        val chapter = comic.chapters.first()
-        return loadChapter(chapter)
+        TODO()
+//        Napier.d { "got comic '${comic.title}'" }
+//        val chapter = comic.chapters.first()
+//        return loadChapter(chapter)
     }
 
-    suspend fun loadChapter(chapter: ComicRepository.Chapter): ChapterContentResult {
+    suspend fun loadChapter(chapter: Chapter): ChapterContentResult {
         setProgress(chapter)
         return ChapterContentResult(
             chapter = chapter,
@@ -70,7 +75,7 @@ class ReaderController(
     /**
      * Loads a page from the given chapter as a flow of [PageResult]
      */
-    fun getPage(chapter: ComicRepository.Chapter, pageIndex: Int) = flow {
+    fun getPage(chapter: Chapter, pageIndex: Int) = flow {
         try {
             emit(PageResult.Loading)
             val page = loadPage(chapter, pageIndex).await()
@@ -81,8 +86,8 @@ class ReaderController(
     }
 
     suspend fun setProgress(
-        chapter: ComicRepository.Chapter,
-        pageIndex: Int = ComicRepository.INITIAL_PAGE
+        chapter: Chapter,
+        pageIndex: Int = INITIAL_PAGE
     ) {
         val pagesInChapter = loadFirstPageInChapter(chapter)
         Napier.d { "loaded chapter '${chapter.title}' with ${pagesInChapter.size} pages" }
@@ -90,7 +95,7 @@ class ReaderController(
     }
 
     private suspend fun loadAroundCurrentProgress(
-        chapter: ComicRepository.Chapter,
+        chapter: Chapter,
         pagesInChapter: List<Int>,
         pageIndex: Int
     ) {
@@ -106,7 +111,7 @@ class ReaderController(
     }
 
     private suspend fun loadPageWithDelta(
-        chapter: ComicRepository.Chapter,
+        chapter: Chapter,
         pagesInChapter: List<Int>,
         pageIndex: Int,
         delta: Int
@@ -137,22 +142,23 @@ class ReaderController(
     private fun loadImageAsync(imageUrl: String) {
         val imageRequest = ImageRequest.Builder(platformContext)
             .data(imageUrl)
-            .addComicHeader(comic.homeUrl)
+            .addComicHeader(comicAndChapters.first.homeUrl)
             .build()
         SingletonImageLoader.get(platformContext)
             .enqueue(imageRequest)
     }
 
-    private suspend fun loadFirstPageInChapter(chapter: ComicRepository.Chapter): List<Int> {
-        val pageAsync = getPageFromCache(chapter, ComicRepository.INITIAL_PAGE)
-            ?: loadPage(chapter, ComicRepository.INITIAL_PAGE)
-        return pageAsync.await().getOrThrow().listOfPagesInChapter
+    private suspend fun loadFirstPageInChapter(chapter: Chapter): List<Int> {
+        val pageAsync = getPageFromCache(chapter, INITIAL_PAGE)
+            ?: loadPage(chapter, INITIAL_PAGE)
+        TODO()
+//        return pageAsync.await().getOrThrow().listOfPagesInChapter
     }
 
     private suspend fun loadPage(
-        chapter: ComicRepository.Chapter,
+        chapter: Chapter,
         pageIndex: Int
-    ): Deferred<Result<ComicRepository.Page>> = coroutineScope {
+    ): Deferred<Result<Page>> = coroutineScope {
         val pageAsync = getPageFromCache(chapter, pageIndex)
         val actualDeferred = if (pageAsync == null) {
             Napier.d("no cached page found, loading page $pageIndex")
@@ -186,19 +192,22 @@ class ReaderController(
         return@coroutineScope actualDeferred
     }
 
-    private fun ComicRepository.Chapter.isFirst() = comic.chapters.first() == this
-    private fun ComicRepository.Chapter.isLast() = comic.chapters.last() == this
+    private fun Chapter.isFirst(): Boolean = TODO()
+    //    comic.chapters.first() == this
 
-    data class PageKey(val chapter: ComicRepository.Chapter, val pageIndex: Int)
+    private fun Chapter.isLast(): Boolean = TODO()
+    //    comic.chapters.last() == this
+
+    data class PageKey(val chapter: Chapter, val pageIndex: Int)
 
     data class ChapterContentResult(
-        val chapter: ComicRepository.Chapter,
+        val chapter: Chapter,
         val pagesInChapter: List<Int>
     )
 
     sealed interface PageResult {
         data object Loading : PageResult
-        data class Loaded(val page: ComicRepository.Page) : PageResult
+        data class Loaded(val page: Page) : PageResult
         data class Error(val error: Throwable) : PageResult
     }
 }

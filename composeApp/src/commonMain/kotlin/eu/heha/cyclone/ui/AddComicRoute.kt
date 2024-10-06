@@ -1,26 +1,27 @@
 package eu.heha.cyclone.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
+import eu.heha.cyclone.model.ComicRepository.AddComicResult.Success
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AddComicRoute(navController: NavController) {
     val model = koinViewModel<AddComicViewModel>()
-    val scope = rememberCoroutineScope()
+    val state = model.state
+    LaunchedEffect(state) {
+        if (state.addComicResult is Success) {
+            navController.popBackStack()
+        }
+    }
     AddComicPane(
-        state = model.state,
+        state = state,
         onComicUrlChange = model::onComicUrlChange,
-        onClickAddComic = {
-            scope.launch {
-                model.addComic()
-                navController.popBackStack()
-            }
-        },
+        onClickAddComic = model::addComic,
         onClickCheckComic = model::checkComic,
-        onClickBack = { navController.popBackStack() }
+        onClickBack = { navController.popBackStack() },
+        onClickCancelProgress = model::cancelProgress
     )
 }
 

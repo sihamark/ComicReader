@@ -6,7 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import eu.heha.cyclone.model.ComicRepository
+import eu.heha.cyclone.database.Chapter
+import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -15,7 +16,7 @@ class ComicReaderViewModel(
     private val readerController: ReaderController
 ) : ViewModel() {
 
-    var comic by mutableStateOf<ComicRepository.Comic?>(null)
+    var comicAndChapters by mutableStateOf<ComicAndChapters?>(null)
         private set
 
     var state: State by mutableStateOf(State.Loading)
@@ -24,14 +25,14 @@ class ComicReaderViewModel(
     var pageState = mutableStateMapOf<Int, ReaderController.PageResult>()
         private set
 
-    private fun requireComic() = comic ?: error("comic not loaded")
+    private fun requireComic() = comicAndChapters ?: error("comic not loaded")
     private fun requireChapter() = (state as? State.Loaded)?.chapter ?: error("chapter not loaded")
 
     private val pageJobCache = mutableMapOf<Int, Job>()
 
     fun loadComic(comicId: String) {
         readerController.setComic(comicId)
-        comic = readerController.comic
+        comicAndChapters = readerController.comicAndChapters
         viewModelScope.launch {
             val result = readerController.loadComic()
             setState(result)
@@ -60,11 +61,11 @@ class ComicReaderViewModel(
 
     private fun loadNewChapter(indexDelta: Int) {
         viewModelScope.launch {
-            val comic = requireComic()
+            val (_, chapters) = requireComic()
             val chapter = requireChapter()
-            val newIndex = comic.chapters.indexOf(chapter) + indexDelta
-            if (newIndex in comic.chapters.indices) {
-                val newChapter = comic.chapters[newIndex]
+            val newIndex = chapters.indexOf(chapter) + indexDelta
+            if (newIndex in chapters.indices) {
+                val newChapter = chapters[newIndex]
                 state = State.Loading
                 val result = readerController.loadChapter(newChapter)
                 setState(result)
@@ -85,7 +86,7 @@ class ComicReaderViewModel(
     sealed interface State {
         data object Loading : State
         data class Loaded(
-            val chapter: ComicRepository.Chapter,
+            val chapter: Chapter,
             val pages: List<Int>,
         ) : State
 
