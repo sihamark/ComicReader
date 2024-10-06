@@ -13,9 +13,6 @@ SELECT last_insert_rowid();
 getById:
 SELECT * FROM Page WHERE id = ?;
 
-getAllForChapter:
-SELECT * FROM Page WHERE chapterId = ? ORDER BY pageNumber ASC;
-
 getByChapterAndPageNumber:
 SELECT * FROM Page WHERE chapterId = ? AND pageNumber = ?;
 
