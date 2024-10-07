@@ -31,6 +31,7 @@ import coil3.request.ImageRequest
 import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
+import eu.heha.cyclone.model.comic
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,7 +63,7 @@ fun ComicsPane(
                 LazyColumn {
                     items(comics) { comic ->
                         Surface(
-                            onClick = { onClickComic(comic.first) },
+                            onClick = { onClickComic(comic.comic) },
                             shape = MaterialTheme.shapes.medium,
                             modifier = Modifier.padding(8.dp)
                         ) {

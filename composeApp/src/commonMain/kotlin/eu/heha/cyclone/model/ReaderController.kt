@@ -25,8 +25,8 @@ class ReaderController(
 ) {
 
     lateinit var comicAndChapters: ComicAndChapters
-    private val comic get() = comicAndChapters.first
-    private val chapters get() = comicAndChapters.second
+    private val comic get() = comicAndChapters.comic
+    private val chapters get() = comicAndChapters.chapters
 
     private val writeMutex = Mutex()
     private val pagesAsyncCache = mutableMapOf<PageKey, Deferred<Result<Page>>>()
@@ -127,7 +127,7 @@ class ReaderController(
     private fun loadImageAsync(imageUrl: String) {
         val imageRequest = ImageRequest.Builder(platformContext)
             .data(imageUrl)
-            .addComicHeader(comicAndChapters.first.homeUrl)
+            .addComicHeader(comicAndChapters.comic.homeUrl)
             .build()
         SingletonImageLoader.get(platformContext)
             .enqueue(imageRequest)

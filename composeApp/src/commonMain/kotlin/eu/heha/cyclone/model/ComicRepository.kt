@@ -10,6 +10,9 @@ import kotlinx.datetime.Clock
 
 typealias ComicAndChapters = Pair<Comic, List<Chapter>>
 
+val ComicAndChapters.comic get() = first
+val ComicAndChapters.chapters get() = second
+
 class ComicRepository(
     private val databaseSource: DatabaseSource,
     private val remoteSource: RemoteSource

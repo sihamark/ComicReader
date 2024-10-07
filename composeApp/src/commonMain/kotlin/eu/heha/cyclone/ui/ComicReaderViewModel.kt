@@ -10,6 +10,7 @@ import eu.heha.cyclone.database.Chapter
 import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.model.RemoteSource
+import eu.heha.cyclone.model.chapters
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -63,11 +64,14 @@ class ComicReaderViewModel(
 
     private fun loadNewChapter(indexDelta: Int) {
         viewModelScope.launch {
-            val (_, chapters) = requireComic()
+            val chapters = requireComic().chapters
             val chapter = requireChapter()
             val newIndex = chapters.indexOfFirst { it.id == chapter.id } + indexDelta
             Napier.d { "loading chapter $newIndex" }
             if (newIndex in chapters.indices) {
+                pageJobCache.forEach { (_, job) -> job.cancel() }
+                pageJobCache.clear()
+                pageState.clear()
                 val newChapter = chapters[newIndex]
                 state = State.Loading
                 val result = readerController.loadChapter(newChapter)
@@ -88,7 +92,7 @@ class ComicReaderViewModel(
     }
 
     private val Chapter.pagesInChapter
-        get() = (RemoteSource.INITIAL_PAGE..numberOfPages)
+        get() = (RemoteSource.INITIAL_PAGE..(numberOfPages.coerceAtLeast(RemoteSource.INITIAL_PAGE)))
 
     sealed interface State {
         data object Loading : State
