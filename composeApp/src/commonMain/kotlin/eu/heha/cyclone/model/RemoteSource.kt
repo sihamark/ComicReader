@@ -29,7 +29,6 @@ class RemoteSource(
         val coverImageUrl = document.select("div.detail_info.clearfix img").first()?.attr("src")
 
         val chapterListElements = document.select("ul.chapter_list > li")
-        Napier.d { "got ${chapterListElements.count()} chapters" }
         val chapters = chapterListElements.reversed().map { chapter ->
             val link = chapter.select("a")
             val chapterName = link.text()
@@ -57,7 +56,7 @@ class RemoteSource(
         if (chapters.isEmpty()) {
             error("no chapters found")
         }
-        Napier.e { "chapters: ${chapters.size}" }
+        Napier.d { "chapters: ${chapters.size}" }
         return@withContext Comic(
             title = comicTitle,
             description = comicDescription,
