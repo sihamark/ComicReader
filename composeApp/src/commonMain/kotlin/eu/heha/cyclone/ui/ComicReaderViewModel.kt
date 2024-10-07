@@ -37,6 +37,7 @@ class ComicReaderViewModel(
         viewModelScope.launch {
             readerController.setComic(comicId)
             comicAndChapters = readerController.comicAndChapters
+            setState(requireComic().chapters.first())
             val result = readerController.loadComic()
             setState(result)
         }
@@ -73,7 +74,7 @@ class ComicReaderViewModel(
                 pageJobCache.clear()
                 pageState.clear()
                 val newChapter = chapters[newIndex]
-                state = State.Loading
+                setState(newChapter)
                 val result = readerController.loadChapter(newChapter)
                 setState(result)
             }
@@ -87,7 +88,7 @@ class ComicReaderViewModel(
         }
         state = State.Loaded(
             chapter = chapter,
-            pages = pagesInChapter
+            pages = pagesInChapter.takeIf { chapter.numberOfPages != 0L }
         )
     }
 
@@ -98,7 +99,7 @@ class ComicReaderViewModel(
         data object Loading : State
         data class Loaded(
             val chapter: Chapter,
-            val pages: LongRange,
+            val pages: LongRange?,
         ) : State
 
         data class Error(val message: String) : State

@@ -93,14 +93,16 @@ fun ComicReaderPane(
         ) {
             when (state) {
                 ComicReaderViewModel.State.Loading -> CircularProgressIndicator()
-                is Loaded -> ComicReaderContent(
-                    comic = comic,
-                    chapter = state.chapter,
-                    pages = state.pages,
-                    pageState = pageState,
-                    onLoadPage = onLoadPage,
-                    onProgress = onProgress
-                )
+                is Loaded -> if (state.pages != null) {
+                    ComicReaderContent(
+                        comic = comic,
+                        chapter = state.chapter,
+                        pages = state.pages,
+                        pageState = pageState,
+                        onLoadPage = onLoadPage,
+                        onProgress = onProgress
+                    )
+                }
 
                 is ComicReaderViewModel.State.Error -> ComicReaderError(state.message)
             }
