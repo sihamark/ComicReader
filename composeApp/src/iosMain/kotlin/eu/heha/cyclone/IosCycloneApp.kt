@@ -2,6 +2,7 @@ package eu.heha.cyclone
 
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import coil3.PlatformContext
+import eu.heha.cyclone.database.Database
 import io.ktor.client.*
 import io.ktor.client.engine.darwin.*
 
