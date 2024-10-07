@@ -2,6 +2,7 @@ package eu.heha.cyclone
 
 import android.app.Application
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import eu.heha.cyclone.database.Database
 
 class ComicReaderApplication : Application() {
     override fun onCreate() {
