@@ -5,8 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ComicRepository
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class AddComicViewModel(
@@ -15,35 +17,53 @@ class AddComicViewModel(
     var state by mutableStateOf(State())
         private set
 
+    private var progressJob: Job? = null
+
     fun onComicUrlChange(newComicUrl: String) {
         state = state.copy(comicUrl = newComicUrl)
     }
 
     fun checkComic() {
-        viewModelScope.launch {
-            state = state.copy(isCheckingComic = true)
+        progressJob = viewModelScope.launch {
+            state = state.copy(progress = Progress.CheckingComic)
             state = state.copy(
                 previewComicResult = try {
-                    Result.success(comicRepository.loadComic(state.comicUrl).also {
-                        Napier.d("loaded comic: $it")
-                    })
+                    val (comic, chapters) = comicRepository.loadComic(state.comicUrl)
+                    Napier.d { "loaded comic '${comic.title}' with ${chapters.size} chapters" }
+                    Result.success(comic to chapters)
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
             )
-            state = state.copy(isCheckingComic = false)
+            state = state.copy(progress = null)
         }
     }
 
+    fun cancelProgress() {
+        progressJob?.cancel()
+        state = state.copy(progress = null)
+    }
+
     fun addComic() {
-        val previewComic = state.previewComicResult?.getOrNull()
-        checkNotNull(previewComic) { "previewComic must not be null, was ${state.previewComicResult}" }
-        comicRepository.addComic(previewComic)
+        progressJob = viewModelScope.launch {
+            val previewComic = state.previewComicResult?.getOrNull()
+            checkNotNull(previewComic) { "previewComic must not be null, was ${state.previewComicResult}" }
+            state = state.copy(progress = Progress.AddingComic)
+            val result = comicRepository.addComic(previewComic)
+            Napier.d { "add comic result: ${result::class.simpleName}" }
+            state = state.copy(addComicResult = result, progress = null)
+        }
     }
 
     data class State(
         val comicUrl: String = "",
-        val previewComicResult: Result<ComicRepository.Comic>? = null,
-        val isCheckingComic: Boolean = false
+        val previewComicResult: Result<ComicAndChapters>? = null,
+        val addComicResult: ComicRepository.AddComicResult? = null,
+        val progress: Progress? = null
     )
+
+    enum class Progress(val isCancellable: Boolean) {
+        CheckingComic(isCancellable = true),
+        AddingComic(isCancellable = false)
+    }
 }

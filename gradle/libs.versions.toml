@@ -3,6 +3,7 @@ android-gradle-plugin = "8.5.2" #downgraded to ensure compatibility with multipl
 
 kotlin = "2.0.20"
 kotlinx-coroutines = "1.9.0"
+kotlinx-datetime = "0.6.1"
 
 androidx-core = "1.13.1"
 androidx-activity = "1.9.2"
@@ -17,6 +18,8 @@ coil = "3.0.0-alpha10"
 
 napier = "2.7.1"
 
+sqldelight = "2.0.2"
+
 koin = "4.0.0"
 ktor = "2.3.12"
 
@@ -25,6 +28,8 @@ ksoup = "0.1.8"
 [libraries]
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
 androidx-activity = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
@@ -51,6 +56,11 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 
+sqldelight-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+sqldelight-native = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
+sqldelight-sqlite = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
+
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 
 ksoup = { module = "com.fleeksoft.ksoup:ksoup-lite", version.ref = "ksoup" }
@@ -61,3 +71,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrains-compose" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }

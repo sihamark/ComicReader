@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.compose)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -39,6 +40,8 @@ kotlin {
             implementation(libs.androidx.activity)
             implementation(libs.androidx.core)
             implementation(libs.material)
+
+            implementation(libs.sqldelight.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -53,6 +56,7 @@ kotlin {
             implementation(libs.navigation.compose)
 
             implementation(libs.kotlinx.coroutines)
+            implementation(libs.kotlinx.datetime)
 
             implementation(libs.coil)
             implementation(libs.coil.network)
@@ -60,6 +64,8 @@ kotlin {
 
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.cio)
+
+            implementation(libs.sqldelight.coroutines)
 
             implementation(libs.ksoup)
 
@@ -74,9 +80,19 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.sqldelight.sqlite)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation(libs.sqldelight.native)
+        }
+    }
+}
+
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("eu.heha.cyclone.database")
         }
     }
 }

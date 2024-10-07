@@ -6,8 +6,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import eu.heha.cyclone.model.ComicRepository
+import eu.heha.cyclone.database.Chapter
+import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
+import eu.heha.cyclone.model.RemoteSource
+import eu.heha.cyclone.model.chapters
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -15,40 +19,41 @@ class ComicReaderViewModel(
     private val readerController: ReaderController
 ) : ViewModel() {
 
-    var comic by mutableStateOf<ComicRepository.Comic?>(null)
+    var comicAndChapters by mutableStateOf<ComicAndChapters?>(null)
         private set
 
     var state: State by mutableStateOf(State.Loading)
         private set
 
-    var pageState = mutableStateMapOf<Int, ReaderController.PageResult>()
+    var pageState = mutableStateMapOf<Long, ReaderController.PageResult>()
         private set
 
-    private fun requireComic() = comic ?: error("comic not loaded")
+    private fun requireComic() = comicAndChapters ?: error("comic not loaded")
     private fun requireChapter() = (state as? State.Loaded)?.chapter ?: error("chapter not loaded")
 
-    private val pageJobCache = mutableMapOf<Int, Job>()
+    private val pageJobCache = mutableMapOf<Long, Job>()
 
-    fun loadComic(comicId: String) {
-        readerController.setComic(comicId)
-        comic = readerController.comic
+    fun loadComic(comicId: Long) {
         viewModelScope.launch {
+            readerController.setComic(comicId)
+            comicAndChapters = readerController.comicAndChapters
+            setState(requireComic().chapters.first())
             val result = readerController.loadComic()
             setState(result)
         }
     }
 
-    fun loadPageState(pageIndex: Int) {
-        pageJobCache[pageIndex]?.cancel()
-        pageJobCache[pageIndex] = viewModelScope.launch {
+    fun loadPageState(pageNumber: Long) {
+        pageJobCache[pageNumber]?.cancel()
+        pageJobCache[pageNumber] = viewModelScope.launch {
             val chapter = requireChapter()
-            readerController.getPage(chapter, pageIndex).collect { pageResult ->
-                pageState[pageIndex] = pageResult
+            readerController.getPage(chapter, pageNumber).collect { pageResult ->
+                pageState[pageNumber] = pageResult
             }
         }
     }
 
-    fun setProgress(pageIndex: Int) {
+    fun setProgress(pageIndex: Long) {
         viewModelScope.launch {
             val chapter = requireChapter()
             readerController.setProgress(chapter, pageIndex)
@@ -60,33 +65,41 @@ class ComicReaderViewModel(
 
     private fun loadNewChapter(indexDelta: Int) {
         viewModelScope.launch {
-            val comic = requireComic()
+            val chapters = requireComic().chapters
             val chapter = requireChapter()
-            val newIndex = comic.chapters.indexOf(chapter) + indexDelta
-            if (newIndex in comic.chapters.indices) {
-                val newChapter = comic.chapters[newIndex]
-                state = State.Loading
+            val newIndex = chapters.indexOfFirst { it.id == chapter.id } + indexDelta
+            Napier.d { "loading chapter $newIndex" }
+            if (newIndex in chapters.indices) {
+                pageJobCache.forEach { (_, job) -> job.cancel() }
+                pageJobCache.clear()
+                pageState.clear()
+                val newChapter = chapters[newIndex]
+                setState(newChapter)
                 val result = readerController.loadChapter(newChapter)
                 setState(result)
             }
         }
     }
 
-    private fun setState(result: ReaderController.ChapterContentResult) {
-        result.pagesInChapter.forEach {
+    private fun setState(chapter: Chapter) {
+        val pagesInChapter = chapter.pagesInChapter
+        pagesInChapter.forEach {
             pageState += it to ReaderController.PageResult.Loading
         }
         state = State.Loaded(
-            chapter = result.chapter,
-            pages = result.pagesInChapter
+            chapter = chapter,
+            pages = pagesInChapter.takeIf { chapter.numberOfPages != 0L }
         )
     }
+
+    private val Chapter.pagesInChapter
+        get() = (RemoteSource.INITIAL_PAGE..(numberOfPages.coerceAtLeast(RemoteSource.INITIAL_PAGE)))
 
     sealed interface State {
         data object Loading : State
         data class Loaded(
-            val chapter: ComicRepository.Chapter,
-            val pages: List<Int>,
+            val chapter: Chapter,
+            val pages: LongRange?,
         ) : State
 
         data class Error(val message: String) : State
