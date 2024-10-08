@@ -1,5 +1,6 @@
 package eu.heha.cyclone.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -24,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -33,6 +36,7 @@ import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.model.comic
+import eu.heha.cyclone.ui.theme.CycloneTheme
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,18 +94,32 @@ fun ComicItem(comicAndChapters: ComicAndChapters) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        val platformContext = koinInject<PlatformContext>()
-        AsyncImage(
-            model = ImageRequest.Builder(platformContext)
-                .data(comic.coverImageUrl)
-                .addComicHeader(comic.homeUrl)
-                .build(),
-            contentDescription = null,
-            imageLoader = SingletonImageLoader.get(platformContext),
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
-        )
+        ) {
+            val isInPreview = LocalInspectionMode.current
+            if (isInPreview) {
+                Image(
+                    Icons.Default.Book,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                val platformContext = koinInject<PlatformContext>()
+                AsyncImage(
+                    model = ImageRequest.Builder(platformContext)
+                        .data(comic.coverImageUrl)
+                        .addComicHeader(comic.homeUrl)
+                        .build(),
+                    contentDescription = null,
+                    imageLoader = SingletonImageLoader.get(platformContext),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Text(
             text = comic.title,
@@ -130,5 +148,31 @@ private fun EmptyContent(
         Button(onClickAddComic) {
             Text(text = "Add Comic")
         }
+    }
+}
+
+@Composable
+fun ComicsPreviewEmptyCommon() {
+    CycloneTheme {
+        BasePreview()
+    }
+}
+
+@Composable
+fun ComicsPreviewLoadedCommon() {
+    CycloneTheme {
+        BasePreview(listOf(Dummy.comicAndChapters(), Dummy.comicAndChapters()))
+    }
+}
+
+@Composable
+private fun BasePreview(comics: List<ComicAndChapters> = emptyList()) {
+    CycloneTheme {
+        ComicsPane(
+            comics = comics,
+            onClickAddComic = {},
+            onClickComic = {},
+            onClickWipeData = {}
+        )
     }
 }

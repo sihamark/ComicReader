@@ -13,7 +13,7 @@ fun main() {
             antilog = Logging.antilog(),
             sqlDriverFactory = { databaseName ->
                 val databaseFile = File("data").resolve(databaseName)
-                    .also { it.parentFile.mkdirs() }
+                    .also { it.parentFile?.mkdirs() }
                 JdbcSqliteDriver(
                     url = "jdbc:sqlite:$databaseFile",
                     schema = Database.Schema
