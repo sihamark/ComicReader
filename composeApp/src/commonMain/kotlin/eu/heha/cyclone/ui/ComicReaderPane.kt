@@ -212,7 +212,7 @@ private fun ComicReaderContent(
                         text = "Page $pageIndex",
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
-                            .align(Alignment.End)
+                            .align(Alignment.CenterHorizontally)
                             .padding(8.dp)
                     )
                 }

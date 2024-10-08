@@ -33,6 +33,8 @@ class ComicReaderViewModel(
 
     private val pageJobCache = mutableMapOf<Long, Job>()
 
+    private var chapterChangeJob: Job? = null
+
     fun loadComic(comicId: Long) {
         viewModelScope.launch {
             readerController.setComic(comicId)
@@ -66,7 +68,8 @@ class ComicReaderViewModel(
     fun loadNextChapter() = loadNewChapter(1)
 
     private fun loadNewChapter(indexDelta: Int) {
-        viewModelScope.launch {
+        chapterChangeJob?.cancel()
+        chapterChangeJob = viewModelScope.launch {
             val chapters = requireComic().chapters
             val chapter = requireChapter()
             val newIndex = chapters.indexOfFirst { it.id == chapter.id } + indexDelta
