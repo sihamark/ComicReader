@@ -1,15 +1,15 @@
 package eu.heha.cyclone.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 
-@Preview
+@PreviewLightDark
 @Composable
 fun ComicsPreviewEmptyDesktop() {
     ComicsPreviewEmptyCommon()
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 fun ComicsPreviewLoadedDesktop() {
     ComicsPreviewLoadedCommon()
