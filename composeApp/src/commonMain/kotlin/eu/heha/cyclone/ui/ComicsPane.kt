@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.SingletonImageLoader
-import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
@@ -82,7 +81,6 @@ fun ComicsPane(
     }
 }
 
-@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun ComicItem(comicAndChapters: ComicAndChapters) {
     val (comic, chapters) = comicAndChapters
