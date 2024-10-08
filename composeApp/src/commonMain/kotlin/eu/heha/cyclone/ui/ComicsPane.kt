@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,22 +25,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.model.comic
-import org.koin.compose.koinInject
+import eu.heha.cyclone.ui.theme.CycloneTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComicsPane(
     comics: List<ComicAndChapters>,
     onClickAddComic: () -> Unit,
-    onClickComic: (Comic) -> Unit
+    onClickComic: (Comic) -> Unit,
+    onClickWipeData: () -> Unit
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -49,6 +52,9 @@ fun ComicsPane(
                 actions = {
                     IconButton(onClick = onClickAddComic) {
                         Icon(Icons.Default.Add, contentDescription = "Add Comic")
+                    }
+                    IconButton(onClick = onClickWipeData) {
+                        Icon(Icons.Default.Delete, contentDescription = "Wipe Data")
                     }
                 }
             )
@@ -76,6 +82,7 @@ fun ComicsPane(
     }
 }
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun ComicItem(comicAndChapters: ComicAndChapters) {
     val (comic, chapters) = comicAndChapters
@@ -85,18 +92,20 @@ fun ComicItem(comicAndChapters: ComicAndChapters) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        val platformContext = koinInject<PlatformContext>()
-        AsyncImage(
-            model = ImageRequest.Builder(platformContext)
-                .data(comic.coverImageUrl)
-                .addComicHeader(comic.homeUrl)
-                .build(),
-            contentDescription = null,
-            imageLoader = SingletonImageLoader.get(platformContext),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-        )
+        DefaultAsyncImagePreviewHandler {
+            val platformContext = LocalPlatformContext.current
+            AsyncImage(
+                model = ImageRequest.Builder(platformContext)
+                    .data(comic.coverImageUrl)
+                    .addComicHeader(comic.homeUrl)
+                    .build(),
+                contentDescription = null,
+                imageLoader = SingletonImageLoader.get(platformContext),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
+        }
         Spacer(Modifier.height(8.dp))
         Text(
             text = comic.title,
@@ -128,4 +137,28 @@ private fun EmptyContent(
     }
 }
 
+@Composable
+fun ComicsPreviewEmptyCommon() {
+    CycloneTheme {
+        BasePreview()
+    }
+}
 
+@Composable
+fun ComicsPreviewLoadedCommon() {
+    CycloneTheme {
+        BasePreview(listOf(Dummy.comicAndChapters(), Dummy.comicAndChapters()))
+    }
+}
+
+@Composable
+private fun BasePreview(comics: List<ComicAndChapters> = emptyList()) {
+    CycloneTheme {
+        ComicsPane(
+            comics = comics,
+            onClickAddComic = {},
+            onClickComic = {},
+            onClickWipeData = {}
+        )
+    }
+}

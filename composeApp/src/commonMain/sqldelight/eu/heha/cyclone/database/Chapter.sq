@@ -26,3 +26,6 @@ SELECT * FROM Chapter WHERE id = ?;
 
 getAllForComic:
 SELECT * FROM Chapter WHERE comicId = ? ORDER BY orderIndex;
+
+deleteAll:
+DELETE FROM Chapter;

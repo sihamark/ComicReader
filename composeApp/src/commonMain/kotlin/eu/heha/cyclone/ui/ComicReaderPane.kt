@@ -29,9 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import eu.heha.cyclone.database.Chapter
 import eu.heha.cyclone.database.Comic
@@ -40,9 +40,7 @@ import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.ui.ComicReaderViewModel.State.Loaded
 import io.github.aakira.napier.Napier
-import org.koin.compose.koinInject
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComicReaderPane(
     comicAndChapters: ComicAndChapters,
@@ -58,30 +56,13 @@ fun ComicReaderPane(
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            val chapter = (state as? Loaded)?.chapter?.title?.let { "\n$it" } ?: ""
-            CenterAlignedTopAppBar(
-                title = { Text(text = comic.title + chapter, textAlign = TextAlign.Center) },
-                navigationIcon = {
-                    IconButton(onClick = onClickBack) {
-                        Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    if (state is Loaded) {
-                        IconButton(
-                            enabled = chapters.first() != state.chapter,
-                            onClick = onClickPreviousChapter
-                        ) {
-                            Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Chapter")
-                        }
-                        IconButton(
-                            enabled = chapters.last() != state.chapter,
-                            onClick = onClickNextChapter
-                        ) {
-                            Icon(Icons.Default.ChevronRight, contentDescription = "Next Chapter")
-                        }
-                    }
-                }
+            TopBar(
+                state = state,
+                comic = comic,
+                chapters = chapters,
+                onClickBack = onClickBack,
+                onClickPreviousChapter = onClickPreviousChapter,
+                onClickNextChapter = onClickNextChapter
             )
         }
     ) { innerPadding ->
@@ -102,12 +83,56 @@ fun ComicReaderPane(
                         onLoadPage = onLoadPage,
                         onProgress = onProgress
                     )
+                } else {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
 
                 is ComicReaderViewModel.State.Error -> ComicReaderError(state.message)
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TopBar(
+    state: ComicReaderViewModel.State,
+    comic: Comic,
+    chapters: List<Chapter>,
+    onClickBack: () -> Unit,
+    onClickPreviousChapter: () -> Unit,
+    onClickNextChapter: () -> Unit
+) {
+    val title = (state as? Loaded)?.chapter?.title ?: comic.title
+    CenterAlignedTopAppBar(
+        title = { Text(text = title, textAlign = TextAlign.Center) },
+        navigationIcon = {
+            IconButton(onClick = onClickBack) {
+                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
+            }
+        },
+        actions = {
+            if (state is Loaded) {
+                IconButton(
+                    enabled = chapters.first() != state.chapter,
+                    onClick = onClickPreviousChapter
+                ) {
+                    Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Chapter")
+                }
+                IconButton(
+                    enabled = chapters.last() != state.chapter,
+                    onClick = onClickNextChapter
+                ) {
+                    Icon(Icons.Default.ChevronRight, contentDescription = "Next Chapter")
+                }
+            }
+        }
+    )
 }
 
 @Composable
@@ -132,7 +157,7 @@ private fun ComicReaderContent(
         LaunchedEffect(chapter) {
             listState.scrollToItem(0)
         }
-        LaunchedEffect(listState) {
+        LaunchedEffect(chapter, listState) {
             snapshotFlow { listState.firstVisibleItemIndex }.collect { index ->
                 val page = pages.first + index
                 Napier.e { "first visible page: $page" }
@@ -145,11 +170,8 @@ private fun ComicReaderContent(
         ) {
             items(pages.toList()) { pageIndex ->
                 val result = pageState[pageIndex]!!
-                LaunchedEffect(pageIndex) {
+                LaunchedEffect(chapter, pageIndex) {
                     onLoadPage(pageIndex)
-                }
-                LaunchedEffect(result) {
-                    Napier.e { "$pageIndex: result: $result" }
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -168,16 +190,18 @@ private fun ComicReaderContent(
                             }
 
                             is ReaderController.PageResult.Loaded -> {
-                                val platformContext = koinInject<PlatformContext>()
-                                AsyncImage(
-                                    model = ImageRequest.Builder(platformContext)
-                                        .data(result.page.imageUrl)
-                                        .addComicHeader(comic.homeUrl)
-                                        .build(),
-                                    contentDescription = "Page $pageIndex",
-                                    imageLoader = SingletonImageLoader.get(platformContext),
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                DefaultAsyncImagePreviewHandler {
+                                    val platformContext = LocalPlatformContext.current
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(platformContext)
+                                            .data(result.page.imageUrl)
+                                            .addComicHeader(comic.homeUrl)
+                                            .build(),
+                                        contentDescription = "Page $pageIndex",
+                                        imageLoader = SingletonImageLoader.get(platformContext),
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                             }
 
                             is ReaderController.PageResult.Error -> {
@@ -189,7 +213,7 @@ private fun ComicReaderContent(
                         text = "Page $pageIndex",
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
-                            .align(Alignment.End)
+                            .align(Alignment.CenterHorizontally)
                             .padding(8.dp)
                     )
                 }

@@ -24,3 +24,6 @@ SELECT EXISTS(SELECT 1 FROM Comic WHERE homeUrl = ?);
 
 insert:
 INSERT INTO Comic (homeUrl, title, description, coverImageUrl, addedAt) VALUES (?, ?, ?, ?, ?);
+
+deleteAll:
+DELETE FROM Comic;

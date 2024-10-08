@@ -33,6 +33,8 @@ class ComicReaderViewModel(
 
     private val pageJobCache = mutableMapOf<Long, Job>()
 
+    private var chapterChangeJob: Job? = null
+
     fun loadComic(comicId: Long) {
         viewModelScope.launch {
             readerController.setComic(comicId)
@@ -44,6 +46,7 @@ class ComicReaderViewModel(
     }
 
     fun loadPageState(pageNumber: Long) {
+        Napier.d { "page $pageNumber came into view, loading state" }
         pageJobCache[pageNumber]?.cancel()
         pageJobCache[pageNumber] = viewModelScope.launch {
             val chapter = requireChapter()
@@ -53,10 +56,11 @@ class ComicReaderViewModel(
         }
     }
 
-    fun setProgress(pageIndex: Long) {
+    fun setProgress(pageNumber: Long) {
+        Napier.d { "page $pageNumber is centered, loading around it" }
         viewModelScope.launch {
             val chapter = requireChapter()
-            readerController.setProgress(chapter, pageIndex)
+            readerController.setProgress(chapter, pageNumber)
         }
     }
 
@@ -64,7 +68,8 @@ class ComicReaderViewModel(
     fun loadNextChapter() = loadNewChapter(1)
 
     private fun loadNewChapter(indexDelta: Int) {
-        viewModelScope.launch {
+        chapterChangeJob?.cancel()
+        chapterChangeJob = viewModelScope.launch {
             val chapters = requireComic().chapters
             val chapter = requireChapter()
             val newIndex = chapters.indexOfFirst { it.id == chapter.id } + indexDelta

@@ -109,6 +109,10 @@ class ComicRepository(
 
     suspend fun getChapter(id: Long): Chapter = databaseSource.getChapter(id)
 
+    suspend fun wipeData() {
+        databaseSource.wipeData()
+    }
+
     companion object {
         fun dummyComics() = listOf(
             "Kaiju No. 8" to "https://www.mangatown.com/manga/kaiju_no_8/",

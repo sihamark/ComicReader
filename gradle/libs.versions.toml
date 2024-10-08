@@ -14,7 +14,7 @@ navigation = "2.8.0-alpha10"
 material = "1.12.0"
 jetbrains-compose = "1.7.0-rc01"
 
-coil = "3.0.0-alpha10"
+coil = "3.0.0-rc01"
 
 napier = "2.7.1"
 
@@ -40,9 +40,12 @@ navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-co
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 
+compose-ui-preview-desktop = { module = "org.jetbrains.compose.ui:ui-tooling-preview-desktop", version.ref = "jetbrains-compose" }
+
 coil = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 coil-network = { module = "io.coil-kt.coil3:coil-network-ktor2", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
+coil-test = { module = "io.coil-kt.coil3:coil-test", version.ref = "coil" }
 
 material = { module = "com.google.android.material:material", version.ref = "material" }
 
