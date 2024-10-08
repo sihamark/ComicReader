@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +40,8 @@ import org.koin.compose.koinInject
 fun ComicsPane(
     comics: List<ComicAndChapters>,
     onClickAddComic: () -> Unit,
-    onClickComic: (Comic) -> Unit
+    onClickComic: (Comic) -> Unit,
+    onClickWipeData: () -> Unit
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -49,6 +51,9 @@ fun ComicsPane(
                 actions = {
                     IconButton(onClick = onClickAddComic) {
                         Icon(Icons.Default.Add, contentDescription = "Add Comic")
+                    }
+                    IconButton(onClick = onClickWipeData) {
+                        Icon(Icons.Default.Delete, contentDescription = "Wipe Data")
                     }
                 }
             )
@@ -127,5 +132,3 @@ private fun EmptyContent(
         }
     }
 }
-
-

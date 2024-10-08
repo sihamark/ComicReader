@@ -50,7 +50,6 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
 
             implementation(libs.lifecycle.viewmodel.compose)
             implementation(libs.navigation.compose)
@@ -81,6 +80,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.sqldelight.sqlite)
+            implementation(libs.compose.ui.preview.desktop)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

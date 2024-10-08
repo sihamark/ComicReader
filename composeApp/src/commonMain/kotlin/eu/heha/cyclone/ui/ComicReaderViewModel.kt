@@ -44,6 +44,7 @@ class ComicReaderViewModel(
     }
 
     fun loadPageState(pageNumber: Long) {
+        Napier.d { "page $pageNumber came into view, loading state" }
         pageJobCache[pageNumber]?.cancel()
         pageJobCache[pageNumber] = viewModelScope.launch {
             val chapter = requireChapter()
@@ -53,10 +54,11 @@ class ComicReaderViewModel(
         }
     }
 
-    fun setProgress(pageIndex: Long) {
+    fun setProgress(pageNumber: Long) {
+        Napier.d { "page $pageNumber is centered, loading around it" }
         viewModelScope.launch {
             val chapter = requireChapter()
-            readerController.setProgress(chapter, pageIndex)
+            readerController.setProgress(chapter, pageNumber)
         }
     }
 

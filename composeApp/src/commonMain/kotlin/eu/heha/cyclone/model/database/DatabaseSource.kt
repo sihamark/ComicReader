@@ -105,4 +105,12 @@ class DatabaseSource(
     suspend fun getChapter(id: Long): Chapter = withContext(Dispatchers.IO) {
         database.chapterQueries.getById(id).executeAsOne()
     }
+
+    suspend fun wipeData() = withContext(Dispatchers.IO) {
+        database.transaction {
+            database.comicQueries.deleteAll()
+            database.chapterQueries.deleteAll()
+            database.pageQueries.deleteAll()
+        }
+    }
 }
