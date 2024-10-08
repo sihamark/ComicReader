@@ -1,6 +1,5 @@
 package eu.heha.cyclone.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -26,18 +24,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
-import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.model.comic
 import eu.heha.cyclone.ui.theme.CycloneTheme
-import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +82,7 @@ fun ComicsPane(
     }
 }
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun ComicItem(comicAndChapters: ComicAndChapters) {
     val (comic, chapters) = comicAndChapters
@@ -94,31 +92,19 @@ fun ComicItem(comicAndChapters: ComicAndChapters) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-        ) {
-            val isInPreview = LocalInspectionMode.current
-            if (isInPreview) {
-                Image(
-                    Icons.Default.Book,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else {
-                val platformContext = koinInject<PlatformContext>()
-                AsyncImage(
-                    model = ImageRequest.Builder(platformContext)
-                        .data(comic.coverImageUrl)
-                        .addComicHeader(comic.homeUrl)
-                        .build(),
-                    contentDescription = null,
-                    imageLoader = SingletonImageLoader.get(platformContext),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        DefaultAsyncImagePreviewHandler {
+            val platformContext = LocalPlatformContext.current
+            AsyncImage(
+                model = ImageRequest.Builder(platformContext)
+                    .data(comic.coverImageUrl)
+                    .addComicHeader(comic.homeUrl)
+                    .build(),
+                contentDescription = null,
+                imageLoader = SingletonImageLoader.get(platformContext),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
         }
         Spacer(Modifier.height(8.dp))
         Text(

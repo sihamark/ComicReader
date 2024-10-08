@@ -29,9 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import eu.heha.cyclone.database.Chapter
 import eu.heha.cyclone.database.Comic
@@ -40,7 +40,6 @@ import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.ui.ComicReaderViewModel.State.Loaded
 import io.github.aakira.napier.Napier
-import org.koin.compose.koinInject
 
 @Composable
 fun ComicReaderPane(
@@ -191,16 +190,18 @@ private fun ComicReaderContent(
                             }
 
                             is ReaderController.PageResult.Loaded -> {
-                                val platformContext = koinInject<PlatformContext>()
-                                AsyncImage(
-                                    model = ImageRequest.Builder(platformContext)
-                                        .data(result.page.imageUrl)
-                                        .addComicHeader(comic.homeUrl)
-                                        .build(),
-                                    contentDescription = "Page $pageIndex",
-                                    imageLoader = SingletonImageLoader.get(platformContext),
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                DefaultAsyncImagePreviewHandler {
+                                    val platformContext = LocalPlatformContext.current
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(platformContext)
+                                            .data(result.page.imageUrl)
+                                            .addComicHeader(comic.homeUrl)
+                                            .build(),
+                                        contentDescription = "Page $pageIndex",
+                                        imageLoader = SingletonImageLoader.get(platformContext),
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                             }
 
                             is ReaderController.PageResult.Error -> {

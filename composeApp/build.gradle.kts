@@ -60,6 +60,7 @@ kotlin {
             implementation(libs.coil)
             implementation(libs.coil.network)
             implementation(libs.coil.compose)
+            implementation(libs.coil.test)
 
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.cio)
