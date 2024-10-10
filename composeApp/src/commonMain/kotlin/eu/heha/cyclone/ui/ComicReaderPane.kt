@@ -1,5 +1,9 @@
 package eu.heha.cyclone.ui
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -24,11 +28,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -196,7 +209,13 @@ private fun ComicPage(
     pageResult: ReaderController.PageResult,
     onLoadPage: (Long) -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    var zIndex by remember { mutableStateOf(0f) }
+    var scale by remember { mutableStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset(0f, 0f)) }
     LaunchedEffect(chapter, pageIndex) {
+        scale = 1f
+        offset = Offset(0f, 0f)
         onLoadPage(pageIndex)
     }
     Column(
@@ -226,6 +245,40 @@ private fun ComicPage(
                             contentDescription = "Page $pageIndex",
                             imageLoader = SingletonImageLoader.get(platformContext),
                             modifier = Modifier.fillMaxSize()
+                                .zIndex(zIndex)
+                                .pointerInput("page$pageIndex") {
+                                    /*
+                                    detectTransformGestures { _, pan, zoom, _ ->
+                                        // Update the scale based on zoom gestures.
+                                        scale *= zoom
+
+                                        // Limit the zoom levels within a certain range (optional).
+                                        scale = scale.coerceIn(0.5f, 3f)
+
+                                        // Update the offset to implement panning when zoomed.
+                                        offset = if (scale == 1f) Offset(0f, 0f) else offset + pan
+                                    }*/
+                                    awaitEachGesture {
+                                        awaitFirstDown()
+                                        zIndex = 100f
+                                        do {
+                                            val event = awaitPointerEvent()
+                                            val newScale = scale * event.calculateZoom()
+                                            scale = newScale.coerceIn(1f, 3f)
+                                            val pan = event.calculatePan()
+                                            offset =
+                                                if (scale == 1f) Offset(0f, 0f) else offset + pan
+                                        } while (event.changes.any { it.pressed })
+                                        zIndex = 0f
+
+                                        offset = Offset(0f, 0f)
+                                        scale = 1f
+                                    }
+                                }
+                                .graphicsLayer(
+                                    scaleX = scale, scaleY = scale,
+                                    translationX = offset.x, translationY = offset.y
+                                )
                         )
                     }
                 }
