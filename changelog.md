@@ -6,3 +6,4 @@
 - runs on Desktop, Android, and iOS
 - Multiple Comics can be added and read
 - it is possible to switch chapters and scroll through the pages
+- the last known position within a comic is saved and restored when reading again
