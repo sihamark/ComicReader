@@ -176,54 +176,71 @@ private fun ComicReaderContent(
         ) {
             items(pages.toList()) { pageIndex ->
                 val result = pageState[pageIndex]!!
-                LaunchedEffect(chapter, pageIndex) {
-                    onLoadPage(pageIndex)
+                ComicPage(
+                    comic = comic,
+                    chapter = chapter,
+                    pageIndex = pageIndex,
+                    pageResult = result,
+                    onLoadPage = onLoadPage
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComicPage(
+    comic: Comic,
+    chapter: Chapter,
+    pageIndex: Long,
+    pageResult: ReaderController.PageResult,
+    onLoadPage: (Long) -> Unit
+) {
+    LaunchedEffect(chapter, pageIndex) {
+        onLoadPage(pageIndex)
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 16.dp)
+            .height(400.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.weight(1f)
+        ) {
+            when (pageResult) {
+                ReaderController.PageResult.Loading -> {
+                    CircularProgressIndicator()
                 }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 16.dp)
-                        .height(400.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        when (result) {
-                            ReaderController.PageResult.Loading -> {
-                                CircularProgressIndicator()
-                            }
 
-                            is ReaderController.PageResult.Loaded -> {
-                                DefaultAsyncImagePreviewHandler {
-                                    val platformContext = LocalPlatformContext.current
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(platformContext)
-                                            .data(result.page.imageUrl)
-                                            .addComicHeader(comic.homeUrl)
-                                            .build(),
-                                        contentDescription = "Page $pageIndex",
-                                        imageLoader = SingletonImageLoader.get(platformContext),
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
-                            }
-
-                            is ReaderController.PageResult.Error -> {
-                                Text(text = "Error: ${result.error}")
-                            }
-                        }
+                is ReaderController.PageResult.Loaded -> {
+                    DefaultAsyncImagePreviewHandler {
+                        val platformContext = LocalPlatformContext.current
+                        AsyncImage(
+                            model = ImageRequest.Builder(platformContext)
+                                .data(pageResult.page.imageUrl)
+                                .addComicHeader(comic.homeUrl)
+                                .build(),
+                            contentDescription = "Page $pageIndex",
+                            imageLoader = SingletonImageLoader.get(platformContext),
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
-                    Text(
-                        text = "Page $pageIndex",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(8.dp)
-                    )
+                }
+
+                is ReaderController.PageResult.Error -> {
+                    Text(text = "Error: ${pageResult.error}")
                 }
             }
         }
+        Text(
+            text = "Page $pageIndex",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(8.dp)
+        )
     }
 }
