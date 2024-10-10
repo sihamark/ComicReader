@@ -8,6 +8,7 @@ import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.database.Database
 import eu.heha.cyclone.database.Page
 import eu.heha.cyclone.model.ComicAndChapters
+import eu.heha.cyclone.model.ComicPosition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +23,8 @@ class DatabaseSource(
             sqlDriver,
             ComicAdapter = Comic.Adapter(
                 readLastAtAdapter = InstantAdapter,
-                addedAtAdapter = InstantAdapter
+                addedAtAdapter = InstantAdapter,
+                latestPositionAdapter = ComicPositionAdapter
             ),
             ChapterAdapter = Chapter.Adapter(
                 releaseDateAdapter = LocalDateAdapter
@@ -113,4 +115,18 @@ class DatabaseSource(
             database.pageQueries.deleteAll()
         }
     }
+
+    suspend fun saveProgress(comic: Comic, chapter: Chapter, pageIndex: Long) =
+        withContext(Dispatchers.IO) {
+            database.transaction {
+                database.comicQueries.updateReadLastAt(
+                    id = comic.id,
+                    readLastAt = Clock.System.now()
+                )
+                database.comicQueries.updateLatestPosition(
+                    id = comic.id,
+                    latestPosition = ComicPosition(chapter.id, pageIndex)
+                )
+            }
+        }
 }

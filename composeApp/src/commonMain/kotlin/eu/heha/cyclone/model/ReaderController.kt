@@ -24,19 +24,15 @@ class ReaderController(
     private val comicRepository: ComicRepository
 ) {
 
-    lateinit var comicAndChapters: ComicAndChapters
+    private lateinit var comicAndChapters: ComicAndChapters
     private val comic get() = comicAndChapters.comic
-    private val chapters get() = comicAndChapters.chapters
 
     private val writeMutex = Mutex()
     private val pagesAsyncCache = mutableMapOf<PageKey, Deferred<Result<Page>>>()
 
     private fun getPageFromCache(
-        chapter: Chapter,
-        pageIndex: Long
-    ): Deferred<Result<Page>>? {
-        return pagesAsyncCache[PageKey(chapter, pageIndex)]
-    }
+        chapter: Chapter, pageIndex: Long
+    ): Deferred<Result<Page>>? = pagesAsyncCache[PageKey(chapter, pageIndex)]
 
     private suspend fun putPageInCache(
         chapter: Chapter,
@@ -54,18 +50,23 @@ class ReaderController(
         }
     }
 
-    suspend fun setComic(comicId: Long) {
+    suspend fun setComic(comicId: Long): ComicAndChapters {
         comicAndChapters = comicRepository.getComicAndChapters(comicId)
+        return comicAndChapters
     }
 
-    suspend fun loadComic(): Chapter {
+    suspend fun loadComic(chapter: Chapter): Chapter {
         Napier.d { "got comic '${comic.title}'" }
-        val chapter = chapters.first()
         return loadChapter(chapter)
     }
 
     suspend fun loadChapter(chapter: Chapter): Chapter {
-        return setProgress(chapter)
+        loadFirstPageInChapter(chapter)
+        val chapterFromDatabase = comicRepository.getChapter(chapter.id)
+        val numberOfPages = chapterFromDatabase.numberOfPages
+        Napier.d { "loaded chapter '${chapterFromDatabase.title}' with $numberOfPages pages" }
+        //loadAroundCurrentProgress(chapterFromDatabase, numberOfPages, INITIAL_PAGE)
+        return chapterFromDatabase
     }
 
     /**
@@ -81,16 +82,9 @@ class ReaderController(
         }
     }
 
-    suspend fun setProgress(
-        chapter: Chapter,
-        pageIndex: Long = INITIAL_PAGE
-    ): Chapter {
-        loadFirstPageInChapter(chapter)
-        val chapterFromDatabase = comicRepository.getChapter(chapter.id)
-        val numberOfPages = chapterFromDatabase.numberOfPages
-        Napier.d { "loaded chapter '${chapterFromDatabase.title}' with $numberOfPages pages" }
-        loadAroundCurrentProgress(chapterFromDatabase, numberOfPages, pageIndex)
-        return chapterFromDatabase
+    suspend fun saveProgress(chapter: Chapter, pageIndex: Long) {
+        Napier.e { "saving progress in chapter ${chapter.title} at page $pageIndex" }
+        comicRepository.saveProgress(comic, chapter, pageIndex)
     }
 
     private suspend fun loadAroundCurrentProgress(
@@ -138,8 +132,7 @@ class ReaderController(
     }
 
     private suspend fun loadPage(
-        chapter: Chapter,
-        pageIndex: Long
+        chapter: Chapter, pageIndex: Long
     ): Deferred<Result<Page>> = coroutineScope {
         val pageAsync = getPageFromCache(chapter, pageIndex)
         val actualDeferred = if (pageAsync == null) {

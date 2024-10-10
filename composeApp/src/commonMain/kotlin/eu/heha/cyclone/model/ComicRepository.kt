@@ -72,7 +72,8 @@ class ComicRepository(
         coverImageUrl = coverImageUrl,
         id = -1,
         readLastAt = null,
-        addedAt = Clock.System.now()
+        addedAt = Clock.System.now(),
+        latestPosition = null
     )
 
     private fun RemoteSource.Chapter.toChapter(order: Int) = Chapter(
@@ -111,6 +112,10 @@ class ComicRepository(
 
     suspend fun wipeData() {
         databaseSource.wipeData()
+    }
+
+    suspend fun saveProgress(comic: Comic, chapter: Chapter, pageIndex: Long) {
+        databaseSource.saveProgress(comic, chapter, pageIndex)
     }
 
     companion object {

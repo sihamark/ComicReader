@@ -1,3 +1,4 @@
+import eu.heha.cyclone.model.ComicPosition;
 import kotlinx.datetime.Instant;
 
 CREATE TABLE Comic (
@@ -7,8 +8,12 @@ CREATE TABLE Comic (
     description TEXT NOT NULL,
     coverImageUrl TEXT NOT NULL,
     addedAt INTEGER AS Instant NOT NULL,
-    readLastAt INTEGER AS Instant
+    readLastAt INTEGER AS Instant,
+    latestPosition TEXT AS ComicPosition
 );
+
+insert:
+INSERT INTO Comic (homeUrl, title, description, coverImageUrl, addedAt) VALUES (?, ?, ?, ?, ?);
 
 getLatestRowId:
 SELECT last_insert_rowid();
@@ -22,8 +27,11 @@ SELECT * FROM Comic;
 doesExist:
 SELECT EXISTS(SELECT 1 FROM Comic WHERE homeUrl = ?);
 
-insert:
-INSERT INTO Comic (homeUrl, title, description, coverImageUrl, addedAt) VALUES (?, ?, ?, ?, ?);
+updateReadLastAt:
+UPDATE Comic SET readLastAt = ? WHERE id = ?;
+
+updateLatestPosition:
+UPDATE Comic SET latestPosition = ? WHERE id = ?;
 
 deleteAll:
 DELETE FROM Comic;

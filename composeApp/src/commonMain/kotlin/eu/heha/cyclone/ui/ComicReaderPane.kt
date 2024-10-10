@@ -80,6 +80,7 @@ fun ComicReaderPane(
                         chapter = state.chapter,
                         pages = state.pages,
                         pageState = pageState,
+                        jumpToPage = state.jumpToPage,
                         onLoadPage = onLoadPage,
                         onProgress = onProgress
                     )
@@ -145,6 +146,7 @@ private fun ComicReaderContent(
     comic: Comic,
     chapter: Chapter,
     pages: LongRange,
+    jumpToPage: Long?,
     pageState: Map<Long, ReaderController.PageResult>,
     onLoadPage: (Long) -> Unit,
     onProgress: (Long) -> Unit
@@ -154,8 +156,12 @@ private fun ComicReaderContent(
         modifier = Modifier.fillMaxWidth()
     ) {
         val listState = rememberLazyListState()
-        LaunchedEffect(chapter) {
-            listState.scrollToItem(0)
+        LaunchedEffect(chapter, jumpToPage) {
+            if (jumpToPage != null) {
+                listState.scrollToItem((jumpToPage - pages.first).toInt())
+            } else {
+                listState.scrollToItem(0)
+            }
         }
         LaunchedEffect(chapter, listState) {
             snapshotFlow { listState.firstVisibleItemIndex }.collect { index ->

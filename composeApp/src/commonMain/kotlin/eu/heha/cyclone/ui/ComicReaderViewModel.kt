@@ -11,6 +11,7 @@ import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.model.RemoteSource
 import eu.heha.cyclone.model.chapters
+import eu.heha.cyclone.model.comic
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -37,11 +38,25 @@ class ComicReaderViewModel(
 
     fun loadComic(comicId: Long) {
         viewModelScope.launch {
-            readerController.setComic(comicId)
-            comicAndChapters = readerController.comicAndChapters
-            setState(requireComic().chapters.first())
-            val result = readerController.loadComic()
-            setState(result)
+            val comicAndChapters = readerController.setComic(comicId)
+            this@ComicReaderViewModel.comicAndChapters = comicAndChapters
+
+
+            val latestPosition = comicAndChapters.comic.latestPosition
+            val latestChapter = latestPosition?.let { position ->
+                //get the chapter of the latest position
+                comicAndChapters.chapters.find { it.id == position.chapterId }
+            } ?: comicAndChapters.chapters.first()
+            setState(latestChapter)
+
+            //get the page of the latest position
+            val result = readerController.loadComic(latestChapter)
+            val pageNumber = if (result == latestChapter) {
+                val pages = result.pagesInChapter
+                (latestPosition?.pageNumber ?: pages.first())
+                    .takeIf { it in pages }
+            } else null
+            setState(result, pageNumber)
         }
     }
 
@@ -60,7 +75,7 @@ class ComicReaderViewModel(
         Napier.d { "page $pageNumber is centered, loading around it" }
         viewModelScope.launch {
             val chapter = requireChapter()
-            readerController.setProgress(chapter, pageNumber)
+            readerController.saveProgress(chapter, pageNumber)
         }
     }
 
@@ -86,14 +101,15 @@ class ComicReaderViewModel(
         }
     }
 
-    private fun setState(chapter: Chapter) {
+    private fun setState(chapter: Chapter, pageNumber: Long? = null) {
         val pagesInChapter = chapter.pagesInChapter
         pagesInChapter.forEach {
             pageState += it to ReaderController.PageResult.Loading
         }
         state = State.Loaded(
             chapter = chapter,
-            pages = pagesInChapter.takeIf { chapter.numberOfPages != 0L }
+            pages = pagesInChapter.takeIf { chapter.numberOfPages != 0L },
+            jumpToPage = pageNumber
         )
     }
 
@@ -105,6 +121,7 @@ class ComicReaderViewModel(
         data class Loaded(
             val chapter: Chapter,
             val pages: LongRange?,
+            val jumpToPage: Long? = null
         ) : State
 
         data class Error(val message: String) : State
