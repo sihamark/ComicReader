@@ -24,19 +24,15 @@ class ReaderController(
     private val comicRepository: ComicRepository
 ) {
 
-    lateinit var comicAndChapters: ComicAndChapters
+    private lateinit var comicAndChapters: ComicAndChapters
     private val comic get() = comicAndChapters.comic
-    private val chapters get() = comicAndChapters.chapters
 
     private val writeMutex = Mutex()
     private val pagesAsyncCache = mutableMapOf<PageKey, Deferred<Result<Page>>>()
 
     private fun getPageFromCache(
-        chapter: Chapter,
-        pageIndex: Long
-    ): Deferred<Result<Page>>? {
-        return pagesAsyncCache[PageKey(chapter, pageIndex)]
-    }
+        chapter: Chapter, pageIndex: Long
+    ): Deferred<Result<Page>>? = pagesAsyncCache[PageKey(chapter, pageIndex)]
 
     private suspend fun putPageInCache(
         chapter: Chapter,
@@ -136,8 +132,7 @@ class ReaderController(
     }
 
     private suspend fun loadPage(
-        chapter: Chapter,
-        pageIndex: Long
+        chapter: Chapter, pageIndex: Long
     ): Deferred<Result<Page>> = coroutineScope {
         val pageAsync = getPageFromCache(chapter, pageIndex)
         val actualDeferred = if (pageAsync == null) {

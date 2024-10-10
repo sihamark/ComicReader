@@ -40,14 +40,23 @@ class ComicReaderViewModel(
         viewModelScope.launch {
             val comicAndChapters = readerController.setComic(comicId)
             this@ComicReaderViewModel.comicAndChapters = comicAndChapters
+
+
             val latestPosition = comicAndChapters.comic.latestPosition
-            Napier.e { "latest position $latestPosition" }
-            val chapter = latestPosition?.let { position ->
+            val latestChapter = latestPosition?.let { position ->
+                //get the chapter of the latest position
                 comicAndChapters.chapters.find { it.id == position.chapterId }
             } ?: comicAndChapters.chapters.first()
-            setState(chapter)
-            val result = readerController.loadComic(chapter)
-            setState(result)
+            setState(latestChapter)
+
+            //get the page of the latest position
+            val result = readerController.loadComic(latestChapter)
+            val pageNumber = if (result == latestChapter) {
+                val pages = result.pagesInChapter
+                (latestPosition?.pageNumber ?: pages.first())
+                    .takeIf { it in pages }
+            } else null
+            setState(result, pageNumber)
         }
     }
 
@@ -92,14 +101,15 @@ class ComicReaderViewModel(
         }
     }
 
-    private fun setState(chapter: Chapter) {
+    private fun setState(chapter: Chapter, pageNumber: Long? = null) {
         val pagesInChapter = chapter.pagesInChapter
         pagesInChapter.forEach {
             pageState += it to ReaderController.PageResult.Loading
         }
         state = State.Loaded(
             chapter = chapter,
-            pages = pagesInChapter.takeIf { chapter.numberOfPages != 0L }
+            pages = pagesInChapter.takeIf { chapter.numberOfPages != 0L },
+            jumpToPage = pageNumber
         )
     }
 
@@ -111,6 +121,7 @@ class ComicReaderViewModel(
         data class Loaded(
             val chapter: Chapter,
             val pages: LongRange?,
+            val jumpToPage: Long? = null
         ) : State
 
         data class Error(val message: String) : State
