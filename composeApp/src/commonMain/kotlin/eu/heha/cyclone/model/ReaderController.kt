@@ -54,18 +54,23 @@ class ReaderController(
         }
     }
 
-    suspend fun setComic(comicId: Long) {
+    suspend fun setComic(comicId: Long): ComicAndChapters {
         comicAndChapters = comicRepository.getComicAndChapters(comicId)
+        return comicAndChapters
     }
 
-    suspend fun loadComic(): Chapter {
+    suspend fun loadComic(chapter: Chapter): Chapter {
         Napier.d { "got comic '${comic.title}'" }
-        val chapter = chapters.first()
         return loadChapter(chapter)
     }
 
     suspend fun loadChapter(chapter: Chapter): Chapter {
-        return setProgress(chapter)
+        loadFirstPageInChapter(chapter)
+        val chapterFromDatabase = comicRepository.getChapter(chapter.id)
+        val numberOfPages = chapterFromDatabase.numberOfPages
+        Napier.d { "loaded chapter '${chapterFromDatabase.title}' with $numberOfPages pages" }
+        //loadAroundCurrentProgress(chapterFromDatabase, numberOfPages, INITIAL_PAGE)
+        return chapterFromDatabase
     }
 
     /**
@@ -81,16 +86,9 @@ class ReaderController(
         }
     }
 
-    suspend fun setProgress(
-        chapter: Chapter,
-        pageIndex: Long = INITIAL_PAGE
-    ): Chapter {
-        loadFirstPageInChapter(chapter)
-        val chapterFromDatabase = comicRepository.getChapter(chapter.id)
-        val numberOfPages = chapterFromDatabase.numberOfPages
-        Napier.d { "loaded chapter '${chapterFromDatabase.title}' with $numberOfPages pages" }
-        loadAroundCurrentProgress(chapterFromDatabase, numberOfPages, pageIndex)
-        return chapterFromDatabase
+    suspend fun saveProgress(chapter: Chapter, pageIndex: Long) {
+        Napier.e { "saving progress in chapter ${chapter.title} at page $pageIndex" }
+        comicRepository.saveProgress(comic, chapter, pageIndex)
     }
 
     private suspend fun loadAroundCurrentProgress(

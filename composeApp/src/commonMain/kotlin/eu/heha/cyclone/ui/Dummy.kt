@@ -15,6 +15,7 @@ object Dummy {
         coverImageUrl = "https://example.com/cover.jpg",
         addedAt = Clock.System.now(),
         readLastAt = Clock.System.now(),
+        latestPosition = null
     )
 
     fun chapter() = Chapter(

@@ -11,6 +11,7 @@ import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.model.RemoteSource
 import eu.heha.cyclone.model.chapters
+import eu.heha.cyclone.model.comic
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -37,10 +38,15 @@ class ComicReaderViewModel(
 
     fun loadComic(comicId: Long) {
         viewModelScope.launch {
-            readerController.setComic(comicId)
-            comicAndChapters = readerController.comicAndChapters
-            setState(requireComic().chapters.first())
-            val result = readerController.loadComic()
+            val comicAndChapters = readerController.setComic(comicId)
+            this@ComicReaderViewModel.comicAndChapters = comicAndChapters
+            val latestPosition = comicAndChapters.comic.latestPosition
+            Napier.e { "latest position $latestPosition" }
+            val chapter = latestPosition?.let { position ->
+                comicAndChapters.chapters.find { it.id == position.chapterId }
+            } ?: comicAndChapters.chapters.first()
+            setState(chapter)
+            val result = readerController.loadComic(chapter)
             setState(result)
         }
     }
@@ -60,7 +66,7 @@ class ComicReaderViewModel(
         Napier.d { "page $pageNumber is centered, loading around it" }
         viewModelScope.launch {
             val chapter = requireChapter()
-            readerController.setProgress(chapter, pageNumber)
+            readerController.saveProgress(chapter, pageNumber)
         }
     }
 
