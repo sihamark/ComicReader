@@ -1,6 +1,5 @@
 package eu.heha.cyclone.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
@@ -242,6 +241,7 @@ private fun ComicPage(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.weight(1f)
+                .zIndex(1f)
         ) {
             when (pageResult) {
                 ReaderController.PageResult.Loading -> {
@@ -260,17 +260,6 @@ private fun ComicPage(
                             imageLoader = SingletonImageLoader.get(platformContext),
                             modifier = Modifier.fillMaxSize()
                                 .pointerInput("page$pageIndex") {
-                                    /*
-                                    detectTransformGestures { _, pan, zoom, _ ->
-                                        // Update the scale based on zoom gestures.
-                                        scale *= zoom
-
-                                        // Limit the zoom levels within a certain range (optional).
-                                        scale = scale.coerceIn(0.5f, 3f)
-
-                                        // Update the offset to implement panning when zoomed.
-                                        offset = if (scale == 1f) Offset(0f, 0f) else offset + pan
-                                    }*/
                                     awaitEachGesture {
                                         awaitFirstDown()
                                         do {
@@ -300,14 +289,12 @@ private fun ComicPage(
                 }
             }
         }
-        AnimatedVisibility(visible = !isInGesture) {
-            Text(
-                text = "Page $pageIndex",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(8.dp)
-            )
-        }
+        Text(
+            text = "Page $pageIndex",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(8.dp)
+        )
     }
 }
