@@ -1,5 +1,7 @@
 package eu.heha.cyclone.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
@@ -53,7 +55,7 @@ import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.ui.ComicReaderViewModel.State.Loaded
-import io.github.aakira.napier.Napier
+import kotlinx.coroutines.launch
 
 @Composable
 fun ComicReaderPane(
@@ -181,7 +183,6 @@ private fun ComicReaderContent(
         LaunchedEffect(chapter, listState) {
             snapshotFlow { listState.firstVisibleItemIndex }.collect { index ->
                 val page = pages.first + index
-                Napier.e { "first visible page: $page" }
                 onProgress(page)
             }
         }
@@ -215,14 +216,28 @@ private fun ComicPage(
     onGestureChanged: (isInGesture: Boolean) -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var scale by remember { mutableStateOf(1f) }
-    var offset by remember { mutableStateOf(Offset(0f, 0f)) }
-    val isInGesture by remember { derivedStateOf { scale != 1f || offset != Offset(0f, 0f) } }
+    //the scale from the zoom gesture
+    val scale = remember { Animatable(1f) }
+    //the offset from the pan gesture
+    val offset = remember {
+        Animatable(
+            Offset(0f, 0f),
+            typeConverter = Offset.VectorConverter
+        )
+    }
+    val isInGesture by remember {
+        //this is only true if there are no zoom and no pan
+        derivedStateOf {
+            scale.value != 1f || offset.value != Offset(0f, 0f)
+        }
+    }
+    //once a gesture starts this page will be lifted up to be over all other pages
     val zIndex by remember { derivedStateOf { if (isInGesture) 1f else 0f } }
 
     LaunchedEffect(chapter, pageIndex) {
-        scale = 1f
-        offset = Offset(0f, 0f)
+        //reset the scale and offset when the page/chapter changes
+        scale.snapTo(1f)
+        offset.snapTo(Offset(0f, 0f))
         onLoadPage(pageIndex)
     }
 
@@ -264,21 +279,33 @@ private fun ComicPage(
                                         awaitFirstDown()
                                         do {
                                             val event = awaitPointerEvent()
-                                            val newScale = scale * event.calculateZoom()
-                                            scale = newScale.coerceIn(1f, 3f)
+                                            //scale calculates from the zoom gesture and is capped between 1 and 3
+                                            val newScale = (scale.value * event.calculateZoom())
+                                                .coerceIn(1f, 3f)
                                             val pan = event.calculatePan()
-                                            offset =
-                                                if (scale == 1f) Offset(0f, 0f) else offset + pan
+                                            //offset calculates from the pan gesture and is only used if there is zoom
+                                            val newOffset =
+                                                if (newScale == 1f) {
+                                                    Offset(0f, 0f)
+                                                } else {
+                                                    offset.value + pan
+                                                }
+                                            scope.launch {
+                                                scale.snapTo(newScale)
+                                                offset.snapTo(newOffset)
+                                            }
                                         } while (event.changes.any { it.pressed })
 
-                                        //todo: animate back
-                                        offset = Offset(0f, 0f)
-                                        scale = 1f
+                                        //once the gesture is done animate back to the original scale and offset
+                                        scope.launch {
+                                            launch { scale.animateTo(1f) }
+                                            launch { offset.animateTo(Offset(0f, 0f)) }
+                                        }
                                     }
                                 }
                                 .graphicsLayer(
-                                    scaleX = scale, scaleY = scale,
-                                    translationX = offset.x, translationY = offset.y
+                                    scaleX = scale.value, scaleY = scale.value,
+                                    translationX = offset.value.x, translationY = offset.value.y
                                 )
                         )
                     }
