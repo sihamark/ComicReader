@@ -1,5 +1,6 @@
 package eu.heha.cyclone.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
@@ -28,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -168,6 +170,7 @@ private fun ComicReaderContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
+        var isScrollingEnabled by remember { mutableStateOf(true) }
         val listState = rememberLazyListState()
         LaunchedEffect(chapter, jumpToPage) {
             if (jumpToPage != null) {
@@ -184,6 +187,7 @@ private fun ComicReaderContent(
             }
         }
         LazyColumn(
+            userScrollEnabled = isScrollingEnabled,
             horizontalAlignment = Alignment.CenterHorizontally,
             state = listState
         ) {
@@ -194,7 +198,8 @@ private fun ComicReaderContent(
                     chapter = chapter,
                     pageIndex = pageIndex,
                     pageResult = result,
-                    onLoadPage = onLoadPage
+                    onLoadPage = onLoadPage,
+                    onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture }
                 )
             }
         }
@@ -207,21 +212,30 @@ private fun ComicPage(
     chapter: Chapter,
     pageIndex: Long,
     pageResult: ReaderController.PageResult,
-    onLoadPage: (Long) -> Unit
+    onLoadPage: (Long) -> Unit,
+    onGestureChanged: (isInGesture: Boolean) -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var zIndex by remember { mutableStateOf(0f) }
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+    val isInGesture by remember { derivedStateOf { scale != 1f || offset != Offset(0f, 0f) } }
+    val zIndex by remember { derivedStateOf { if (isInGesture) 1f else 0f } }
+
     LaunchedEffect(chapter, pageIndex) {
         scale = 1f
         offset = Offset(0f, 0f)
         onLoadPage(pageIndex)
     }
+
+    LaunchedEffect(isInGesture) {
+        onGestureChanged(isInGesture)
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
+            .zIndex(zIndex)
             .padding(vertical = 8.dp, horizontal = 16.dp)
             .height(400.dp)
     ) {
@@ -245,7 +259,6 @@ private fun ComicPage(
                             contentDescription = "Page $pageIndex",
                             imageLoader = SingletonImageLoader.get(platformContext),
                             modifier = Modifier.fillMaxSize()
-                                .zIndex(zIndex)
                                 .pointerInput("page$pageIndex") {
                                     /*
                                     detectTransformGestures { _, pan, zoom, _ ->
@@ -260,7 +273,6 @@ private fun ComicPage(
                                     }*/
                                     awaitEachGesture {
                                         awaitFirstDown()
-                                        zIndex = 100f
                                         do {
                                             val event = awaitPointerEvent()
                                             val newScale = scale * event.calculateZoom()
@@ -269,8 +281,8 @@ private fun ComicPage(
                                             offset =
                                                 if (scale == 1f) Offset(0f, 0f) else offset + pan
                                         } while (event.changes.any { it.pressed })
-                                        zIndex = 0f
 
+                                        //todo: animate back
                                         offset = Offset(0f, 0f)
                                         scale = 1f
                                     }
@@ -288,12 +300,14 @@ private fun ComicPage(
                 }
             }
         }
-        Text(
-            text = "Page $pageIndex",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(8.dp)
-        )
+        AnimatedVisibility(visible = !isInGesture) {
+            Text(
+                text = "Page $pageIndex",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(8.dp)
+            )
+        }
     }
 }
