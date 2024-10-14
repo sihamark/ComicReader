@@ -17,3 +17,4 @@ Manga and Comic Reading app for Android, iOS and Desktop. Built using Compose Mu
     - [ ] display of used size of images
     - [ ] removal of chapters/manga from download
 - [ ] support for different WindowSizes and multiple panes
+- [ ] change exported package for ios so that the import changes to Cyclone
