@@ -226,7 +226,7 @@ private fun ComicPage(
         )
     }
     val isInGesture by remember {
-        //this is only true if there are no zoom and no pan
+        //this is only true if there the user zooms or pans
         derivedStateOf {
             scale.value != 1f || offset.value != Offset(0f, 0f)
         }
@@ -284,12 +284,11 @@ private fun ComicPage(
                                                 .coerceIn(1f, 3f)
                                             val pan = event.calculatePan()
                                             //offset calculates from the pan gesture and is only used if there is zoom
-                                            val newOffset =
-                                                if (newScale == 1f) {
-                                                    Offset(0f, 0f)
-                                                } else {
-                                                    offset.value + pan
-                                                }
+                                            val newOffset = if (newScale == 1f) {
+                                                Offset(0f, 0f)
+                                            } else {
+                                                offset.value + pan
+                                            }
                                             scope.launch {
                                                 scale.snapTo(newScale)
                                                 offset.snapTo(newOffset)
