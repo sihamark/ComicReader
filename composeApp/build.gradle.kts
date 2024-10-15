@@ -145,6 +145,7 @@ compose.desktop {
         mainClass = "eu.heha.cyclone.CycloneMainKt"
 
         nativeDistributions {
+            modules("java.sql")
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = AppConfig.groupId
             packageVersion = AppConfig.versionName
