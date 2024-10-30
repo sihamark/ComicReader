@@ -95,8 +95,8 @@ fun ComicReaderPane(
                         comic = comic,
                         chapter = state.chapter,
                         pages = state.pages,
-                        pageState = pageState,
                         jumpToPage = state.jumpToPage,
+                        pageState = pageState,
                         onLoadPage = onLoadPage,
                         onProgress = onProgress
                     )

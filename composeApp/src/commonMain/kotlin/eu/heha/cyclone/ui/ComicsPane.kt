@@ -84,36 +84,47 @@ fun ComicsPane(
 @Composable
 fun ComicItem(comicAndChapters: ComicAndChapters) {
     val (comic, chapters) = comicAndChapters
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        DefaultAsyncImagePreviewHandler {
-            val platformContext = LocalPlatformContext.current
-            AsyncImage(
-                model = ImageRequest.Builder(platformContext)
-                    .data(comic.coverImageUrl)
-                    .addComicHeader(comic.homeUrl)
-                    .build(),
-                contentDescription = null,
-                imageLoader = SingletonImageLoader.get(platformContext),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            DefaultAsyncImagePreviewHandler {
+                val platformContext = LocalPlatformContext.current
+                AsyncImage(
+                    model = ImageRequest.Builder(platformContext)
+                        .data(comic.coverImageUrl)
+                        .addComicHeader(comic.homeUrl)
+                        .build(),
+                    contentDescription = null,
+                    imageLoader = SingletonImageLoader.get(platformContext),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = comic.title,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "${chapters.size} Chapters",
+                style = MaterialTheme.typography.bodyMedium
             )
         }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = comic.title,
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "${chapters.size} Chapters",
-            style = MaterialTheme.typography.bodyMedium
-        )
+        IconButton(
+            onClick = {},
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete")
+        }
     }
 }
 

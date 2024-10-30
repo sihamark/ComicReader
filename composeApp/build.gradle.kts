@@ -48,11 +48,14 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
+            implementation(compose.material3AdaptiveNavigationSuite)
             implementation(compose.ui)
             implementation(compose.components.resources)
 
-            implementation(libs.lifecycle.viewmodel.compose)
-            implementation(libs.navigation.compose)
+            implementation(libs.jetbrains.compose.lifecycle.viewmodel)
+            implementation(libs.jetbrains.compose.navigation)
+            implementation(libs.jetbrains.compose.material3.window.size.clazz)
+            implementation(libs.jetbrains.compose.adaptive)
 
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.datetime)
