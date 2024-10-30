@@ -149,6 +149,14 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = AppConfig.groupId
             packageVersion = AppConfig.versionName
+
+            windows {
+                iconFile.set(project.file("desktopIcons/ic_cyclone.ico"))
+            }
+            linux {
+                iconFile.set(project.file("desktopIcons/ic_cyclone.png"))
+            }
+
         }
     }
 }
