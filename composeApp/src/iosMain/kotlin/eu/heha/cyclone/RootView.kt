@@ -4,7 +4,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import eu.heha.cyclone.ui.Root
 
 /**
- * Main view controller for the iOS app.
+ * View controller for the iOS app.
  * This is a simple wrapper around the [Root] composable.
  */
 @Suppress("unused")
