@@ -5,9 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import eu.heha.cyclone.CycloneApp
-import eu.heha.cyclone.ui.SimpleNavigationDestination.ADD_COMIC
-import eu.heha.cyclone.ui.SimpleNavigationDestination.COMICS
 import eu.heha.cyclone.ui.theme.CycloneTheme
 import org.koin.compose.KoinContext
 
@@ -20,16 +19,16 @@ fun Root(
             val navController = rememberNavController()
             NavHost(
                 navController = navController,
-                startDestination = COMICS.route
+                startDestination = Comics
             ) {
-                composable(COMICS.route) {
+                composable<Comics> {
                     ComicsRoute(navController)
                 }
-                composable(ADD_COMIC.route) {
+                composable<ComicAdd> {
                     AddComicRoute(navController)
                 }
-                composable(ComicDestination.route) { backStackEntry ->
-                    val comicId = ComicDestination.getId(backStackEntry)
+                composable<Comic> { backStackEntry ->
+                    val comicId = backStackEntry.toRoute<Comic>().id
                     ComicReaderRoute(navController, comicId)
                 }
             }

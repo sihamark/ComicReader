@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.navOptions
-import eu.heha.cyclone.ui.SimpleNavigationDestination.ADD_COMIC
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -17,11 +16,11 @@ fun ComicsRoute(navController: NavController) {
         comics = comics,
         onClickAddComic = {
             navController.navigate(
-                ADD_COMIC.route,
+                ComicAdd,
                 navOptions = navOptions { launchSingleTop = true })
         },
         onClickComic = { comic ->
-            navController.navigate(ComicDestination.withId(comic.id))
+            navController.navigate(Comic(comic.id))
         },
         onClickWipeData = model::wipeData
     )
