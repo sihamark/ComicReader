@@ -1,5 +1,5 @@
 import SwiftUI
-import ComposeApp
+import CycloneApp
 
 @main
 struct iOSApp: App {

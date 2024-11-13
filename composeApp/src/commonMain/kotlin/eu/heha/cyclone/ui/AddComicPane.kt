@@ -127,7 +127,7 @@ private fun Content(
                     Spacer(Modifier.height(16.dp))
                     Text("Comic Preview:")
                     Spacer(Modifier.height(8.dp))
-                    ComicItem(previewComic)
+                    ComicDisplay(previewComic)
                     Spacer(Modifier.height(8.dp))
                     Button(
                         enabled = state.progress == null,

@@ -17,23 +17,17 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import coil3.SingletonImageLoader
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
 import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.model.ComicAndChapters
-import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.model.comic
 import eu.heha.cyclone.ui.theme.CycloneTheme
+import io.github.aakira.napier.Napier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,63 +61,15 @@ fun ComicsPane(
             } else {
                 LazyColumn {
                     items(comics) { comic ->
-                        Surface(
+                        ComicCard(
+                            comicAndChapters = comic,
                             onClick = { onClickComic(comic.comic) },
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier.padding(8.dp)
-                        ) {
-                            ComicItem(comic)
-                        }
+                            onClickDelete = { Napier.e { "delete comic ${comic.comic.id}" } },
+                            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+                        )
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun ComicItem(comicAndChapters: ComicAndChapters) {
-    val (comic, chapters) = comicAndChapters
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            DefaultAsyncImagePreviewHandler {
-                val platformContext = LocalPlatformContext.current
-                AsyncImage(
-                    model = ImageRequest.Builder(platformContext)
-                        .data(comic.coverImageUrl)
-                        .addComicHeader(comic.homeUrl)
-                        .build(),
-                    contentDescription = null,
-                    imageLoader = SingletonImageLoader.get(platformContext),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = comic.title,
-                style = MaterialTheme.typography.titleLarge
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "${chapters.size} Chapters",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-        IconButton(
-            onClick = {},
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete")
         }
     }
 }
