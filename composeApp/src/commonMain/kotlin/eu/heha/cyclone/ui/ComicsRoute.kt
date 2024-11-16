@@ -22,6 +22,7 @@ fun ComicsRoute(navController: NavController) {
         onClickComic = { comic ->
             navController.navigate(Comic(comic.id))
         },
-        onClickWipeData = model::wipeData
+        onClickWipeData = model::wipeData,
+        onCLickDeleteComic = model::deleteComic
     )
 }

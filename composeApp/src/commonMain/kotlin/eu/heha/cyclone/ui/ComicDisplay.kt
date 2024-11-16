@@ -94,7 +94,13 @@ fun ComicCard(
                     expanded = isMoreMenuVisible,
                     onDismissRequest = { isMoreMenuVisible = false }
                 ) {
-                    DropdownMenuItem(text = { Text("Delete") }, onClick = onClickDelete)
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        onClick = {
+                            onClickDelete()
+                            isMoreMenuVisible = false
+                        }
+                    )
                 }
             }
         }

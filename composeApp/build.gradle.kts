@@ -27,7 +27,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "CyclconeApp"
+            baseName = "CycloneApp"
             isStatic = true
         }
     }
@@ -160,7 +160,6 @@ compose.desktop {
             linux {
                 iconFile.set(project.file("desktopIcons/ic_cyclone.png"))
             }
-
         }
     }
 }

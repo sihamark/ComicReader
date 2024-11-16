@@ -118,6 +118,10 @@ class ComicRepository(
         databaseSource.saveProgress(comic, chapter, pageIndex)
     }
 
+    suspend fun deleteComic(comic: Comic) {
+        databaseSource.deleteComic(comic)
+    }
+
     companion object {
         fun dummyComics() = listOf(
             "Kaiju No. 8" to "https://www.mangatown.com/manga/kaiju_no_8/",

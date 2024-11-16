@@ -116,6 +116,12 @@ class DatabaseSource(
         }
     }
 
+    suspend fun deleteComic(comic: Comic) = withContext(Dispatchers.IO) {
+        database.transaction {
+            database.comicQueries.deleteById(comic.id)
+        }
+    }
+
     suspend fun saveProgress(comic: Comic, chapter: Chapter, pageIndex: Long) =
         withContext(Dispatchers.IO) {
             database.transaction {
