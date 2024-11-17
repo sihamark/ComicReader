@@ -89,7 +89,8 @@ fun ComicsPane(
                             comicAndChapters = comic,
                             onClick = { onClickComic(comic.comic) },
                             onClickDelete = { comicDeletionPrompt = comic.comic },
-                            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+                            modifier = Modifier
+                                .padding(horizontal = 32.dp, vertical = 8.dp)
                                 .animateItem()
                         )
                     }
