@@ -4,34 +4,36 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import coil3.SingletonImageLoader
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
 import eu.heha.cyclone.database.Comic
 import eu.heha.cyclone.model.ComicAndChapters
-import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.model.comic
 import eu.heha.cyclone.ui.theme.CycloneTheme
 
@@ -41,19 +43,35 @@ fun ComicsPane(
     comics: List<ComicAndChapters>,
     onClickAddComic: () -> Unit,
     onClickComic: (Comic) -> Unit,
-    onClickWipeData: () -> Unit
+    onClickWipeData: () -> Unit,
+    onCLickDeleteComic: (Comic) -> Unit
 ) {
+    var comicDeletionPrompt by remember { mutableStateOf<Comic?>(null) }
+    var isWipeDataPromptVisible by remember { mutableStateOf(false) }
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Comics") },
                 actions = {
+                    var isMoreMenuExpanded by remember { mutableStateOf(false) }
                     IconButton(onClick = onClickAddComic) {
                         Icon(Icons.Default.Add, contentDescription = "Add Comic")
                     }
-                    IconButton(onClick = onClickWipeData) {
-                        Icon(Icons.Default.Delete, contentDescription = "Wipe Data")
+                    IconButton(onClick = { isMoreMenuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    }
+                    DropdownMenu(
+                        expanded = isMoreMenuExpanded,
+                        onDismissRequest = { isMoreMenuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Wipe Data") },
+                            onClick = {
+                                isMoreMenuExpanded = false
+                                isWipeDataPromptVisible = true
+                            }
+                        )
                     }
                 }
             )
@@ -65,55 +83,38 @@ fun ComicsPane(
             if (comics.isEmpty()) {
                 EmptyContent(onClickAddComic)
             } else {
-                LazyColumn {
-                    items(comics) { comic ->
-                        Surface(
+                LazyColumn(Modifier.fillMaxSize()) {
+                    items(comics, key = { it.comic.id }) { comic ->
+                        ComicCard(
+                            comicAndChapters = comic,
                             onClick = { onClickComic(comic.comic) },
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier.padding(8.dp)
-                        ) {
-                            ComicItem(comic)
-                        }
+                            onClickDelete = { comicDeletionPrompt = comic.comic },
+                            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+                                .animateItem()
+                        )
+                    }
+                    item {
+                        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                     }
                 }
             }
         }
-    }
-}
 
-@Composable
-fun ComicItem(comicAndChapters: ComicAndChapters) {
-    val (comic, chapters) = comicAndChapters
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        DefaultAsyncImagePreviewHandler {
-            val platformContext = LocalPlatformContext.current
-            AsyncImage(
-                model = ImageRequest.Builder(platformContext)
-                    .data(comic.coverImageUrl)
-                    .addComicHeader(comic.homeUrl)
-                    .build(),
-                contentDescription = null,
-                imageLoader = SingletonImageLoader.get(platformContext),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
+        val comicToDelete = comicDeletionPrompt
+        if (comicToDelete != null) {
+            DeleteDialog(
+                text = "Are you sure you want to delete the comic '${comicToDelete.title}'?",
+                onDismissRequest = { comicDeletionPrompt = null },
+                onDelete = { onCLickDeleteComic(comicToDelete) }
             )
         }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = comic.title,
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "${chapters.size} Chapters",
-            style = MaterialTheme.typography.bodyMedium
-        )
+        if (isWipeDataPromptVisible) {
+            DeleteDialog(
+                text = "Are you sure you want to wipe all data?",
+                onDismissRequest = { isWipeDataPromptVisible = false },
+                onDelete = onClickWipeData
+            )
+        }
     }
 }
 
@@ -156,7 +157,8 @@ private fun BasePreview(comics: List<ComicAndChapters> = emptyList()) {
             comics = comics,
             onClickAddComic = {},
             onClickComic = {},
-            onClickWipeData = {}
+            onClickWipeData = {},
+            onCLickDeleteComic = {}
         )
     }
 }

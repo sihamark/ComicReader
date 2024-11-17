@@ -33,5 +33,8 @@ UPDATE Comic SET readLastAt = ? WHERE id = ?;
 updateLatestPosition:
 UPDATE Comic SET latestPosition = ? WHERE id = ?;
 
+deleteById:
+DELETE FROM Comic WHERE id = ?;
+
 deleteAll:
 DELETE FROM Comic;

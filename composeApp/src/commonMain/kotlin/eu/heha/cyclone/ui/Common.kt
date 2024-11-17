@@ -1,6 +1,9 @@
 package eu.heha.cyclone.ui
 
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.toArgb
@@ -20,4 +23,31 @@ fun DefaultAsyncImagePreviewHandler(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAsyncImagePreviewHandler provides AsyncImagePreviewHandler { _, _ ->
         Loading(FakeImage(color = primaryColor.toArgb()).asPainter(platformContext))
     }, content = content)
+}
+
+@Composable
+fun DeleteDialog(
+    text: String,
+    onDismissRequest: () -> Unit,
+    onDelete: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        text = { Text(text) },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDismissRequest()
+                    onDelete()
+                }
+            ) {
+                Text("Delete", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text("Cancel")
+            }
+        }
+    )
 }

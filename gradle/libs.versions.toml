@@ -5,25 +5,26 @@ kotlin = "2.0.21"
 kotlinx-coroutines = "1.9.0"
 kotlinx-datetime = "0.6.1"
 
-androidx-core = "1.13.1"
+androidx-core = "1.15.0"
 androidx-activity = "1.9.3"
 
-lifecycle = "2.8.3"
-navigation = "2.8.0-alpha10"
+jetbrains-lifecycle = "2.8.3"
+jetbrains-navigation = "2.8.0-alpha10"
+jetbrains-adaptive = "1.0.1"
 
 material = "1.12.0"
-jetbrains-compose = "1.7.0"
+jetbrains-compose = "1.7.1"
 
-coil = "3.0.0-rc02"
+coil = "3.0.2"
 
 napier = "2.7.1"
 
 sqldelight = "2.0.2"
 
 koin = "4.0.0"
-ktor = "3.0.0"
+ktor = "3.0.1"
 
-ksoup = "0.1.8"
+ksoup = "0.2.0"
 
 [libraries]
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
@@ -34,8 +35,10 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
 androidx-activity = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 
-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" }
+jetbrains-compose-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrains-lifecycle" }
+jetbrains-compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "jetbrains-navigation" }
+jetbrains-compose-material3-window-size-clazz = { module = "org.jetbrains.compose.material3:material3-window-size-class", version.ref = "jetbrains-compose" }
+jetbrains-compose-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "jetbrains-adaptive" }
 
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -73,5 +76,6 @@ android-application = { id = "com.android.application", version.ref = "android-g
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrains-compose" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }

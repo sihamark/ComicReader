@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.sqldelight)
 }
@@ -26,7 +27,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "ComposeApp"
+            baseName = "CycloneApp"
             isStatic = true
         }
     }
@@ -48,11 +49,14 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.materialIconsExtended)
+            implementation(compose.material3AdaptiveNavigationSuite)
             implementation(compose.ui)
             implementation(compose.components.resources)
 
-            implementation(libs.lifecycle.viewmodel.compose)
-            implementation(libs.navigation.compose)
+            implementation(libs.jetbrains.compose.lifecycle.viewmodel)
+            implementation(libs.jetbrains.compose.navigation)
+            implementation(libs.jetbrains.compose.material3.window.size.clazz)
+            implementation(libs.jetbrains.compose.adaptive)
 
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.datetime)
@@ -156,7 +160,6 @@ compose.desktop {
             linux {
                 iconFile.set(project.file("desktopIcons/ic_cyclone.png"))
             }
-
         }
     }
 }

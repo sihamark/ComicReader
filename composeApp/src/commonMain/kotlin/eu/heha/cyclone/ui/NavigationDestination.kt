@@ -1,23 +1,12 @@
 package eu.heha.cyclone.ui
 
-import androidx.navigation.NavBackStackEntry
+import kotlinx.serialization.Serializable
 
-interface NavigationDestination {
-    val route: String
-}
+@Serializable
+object Comics
 
-enum class SimpleNavigationDestination(override val route: String) : NavigationDestination {
-    COMICS("comics"),
-    ADD_COMIC("comic_add")
-}
+@Serializable
+object ComicAdd
 
-data object ComicDestination : NavigationDestination {
-    private fun routeFormat(id: Any) = "comic/$id"
-    private const val ID = "id"
-
-    override val route: String = routeFormat("{id}")
-
-    fun withId(id: Long) = routeFormat(id)
-    fun getId(entry: NavBackStackEntry): Long = entry.arguments?.getString(ID)?.toLong()
-        ?: throw IllegalArgumentException("no id found in $entry")
-}
+@Serializable
+data class Comic(val id: Long)

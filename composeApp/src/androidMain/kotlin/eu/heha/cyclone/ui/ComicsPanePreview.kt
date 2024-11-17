@@ -5,12 +5,12 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 
 @PreviewLightDark
 @Composable
-fun ComicsPreviewEmptyDesktop() {
+fun ComicsPreviewEmptyAndroid() {
     ComicsPreviewEmptyCommon()
 }
 
 @PreviewLightDark
 @Composable
-fun ComicsPreviewLoadedDesktop() {
+fun ComicsPreviewLoadedAndroid() {
     ComicsPreviewLoadedCommon()
 }
