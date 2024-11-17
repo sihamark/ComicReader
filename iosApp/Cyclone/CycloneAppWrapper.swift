@@ -9,6 +9,3 @@ struct CycloneAppWrapper: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }
-
-
-
