@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -80,14 +83,18 @@ fun ComicsPane(
             if (comics.isEmpty()) {
                 EmptyContent(onClickAddComic)
             } else {
-                LazyColumn {
-                    items(comics) { comic ->
+                LazyColumn(Modifier.fillMaxSize()) {
+                    items(comics, key = { it.comic.id }) { comic ->
                         ComicCard(
                             comicAndChapters = comic,
                             onClick = { onClickComic(comic.comic) },
                             onClickDelete = { comicDeletionPrompt = comic.comic },
                             modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+                                .animateItem()
                         )
+                    }
+                    item {
+                        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                     }
                 }
             }
