@@ -113,6 +113,21 @@ class ComicReaderViewModel(
         )
     }
 
+    fun setChapter(chapter: Chapter) {
+        if (chapter !in requireComic().chapters) {
+            Napier.e { "chapter $chapter not in comic" }
+            return
+        }
+        viewModelScope.launch {
+            pageJobCache.forEach { (_, job) -> job.cancel() }
+            pageJobCache.clear()
+            pageState.clear()
+            setState(chapter)
+            val result = readerController.loadChapter(chapter)
+            setState(result)
+        }
+    }
+
     private val Chapter.pagesInChapter
         get() = (RemoteSource.INITIAL_PAGE..(numberOfPages.coerceAtLeast(RemoteSource.INITIAL_PAGE)))
 

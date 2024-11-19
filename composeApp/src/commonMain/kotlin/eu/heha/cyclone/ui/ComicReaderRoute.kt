@@ -21,7 +21,8 @@ fun ComicReaderRoute(navController: NavController, comicId: Long) {
             onProgress = model::setProgress,
             onClickBack = navController::popBackStack,
             onClickPreviousChapter = model::loadPreviousChapter,
-            onClickNextChapter = model::loadNextChapter
+            onClickNextChapter = model::loadNextChapter,
+            onClickChapter = model::setChapter,
         )
     }
 }
