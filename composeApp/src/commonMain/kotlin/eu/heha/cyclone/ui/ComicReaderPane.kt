@@ -8,11 +8,14 @@ import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -94,11 +98,14 @@ fun ComicReaderPane(
                     ComicReaderContent(
                         comic = comic,
                         chapter = state.chapter,
+                        chapters = chapters,
                         pages = state.pages,
                         jumpToPage = state.jumpToPage,
                         pageState = pageState,
                         onLoadPage = onLoadPage,
-                        onProgress = onProgress
+                        onProgress = onProgress,
+                        onClickPreviousChapter = onClickPreviousChapter,
+                        onClickNextChapter = onClickNextChapter
                     )
                 } else {
                     Box(
@@ -136,13 +143,13 @@ private fun TopBar(
         actions = {
             if (state is Loaded) {
                 IconButton(
-                    enabled = chapters.first() != state.chapter,
+                    enabled = !state.chapter.isFirst(chapters),
                     onClick = onClickPreviousChapter
                 ) {
                     Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Chapter")
                 }
                 IconButton(
-                    enabled = chapters.last() != state.chapter,
+                    enabled = !state.chapter.isLast(chapters),
                     onClick = onClickNextChapter
                 ) {
                     Icon(Icons.Default.ChevronRight, contentDescription = "Next Chapter")
@@ -151,6 +158,7 @@ private fun TopBar(
         }
     )
 }
+
 
 @Composable
 private fun ComicReaderError(message: String) {
@@ -161,11 +169,14 @@ private fun ComicReaderError(message: String) {
 private fun ComicReaderContent(
     comic: Comic,
     chapter: Chapter,
+    chapters: List<Chapter>,
     pages: LongRange,
     jumpToPage: Long?,
     pageState: Map<Long, ReaderController.PageResult>,
     onLoadPage: (Long) -> Unit,
-    onProgress: (Long) -> Unit
+    onProgress: (Long) -> Unit,
+    onClickPreviousChapter: () -> Unit,
+    onClickNextChapter: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -173,17 +184,19 @@ private fun ComicReaderContent(
     ) {
         var isScrollingEnabled by remember { mutableStateOf(true) }
         val listState = rememberLazyListState()
+
+        // +1 for the previous chapter button
+        fun toListIndex(page: Long) = (page - pages.first).toInt() + 1
+
+        // -1 for the previous chapter button
+        fun toPageIndex(index: Int) = ((pages.first + index) - 1).coerceAtMost(pages.last)
+
         LaunchedEffect(chapter, jumpToPage) {
-            if (jumpToPage != null) {
-                listState.scrollToItem((jumpToPage - pages.first).toInt())
-            } else {
-                listState.scrollToItem(0)
-            }
+            listState.scrollToItem(toListIndex(jumpToPage ?: pages.first))
         }
         LaunchedEffect(chapter, listState) {
             snapshotFlow { listState.firstVisibleItemIndex }.collect { index ->
-                val page = pages.first + index
-                onProgress(page)
+                onProgress(toPageIndex(index))
             }
         }
         LazyColumn(
@@ -191,6 +204,19 @@ private fun ComicReaderContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             state = listState
         ) {
+            item {
+                TextButton(
+                    onClick = onClickPreviousChapter,
+                    enabled = !chapter.isFirst(chapters)
+                ) {
+                    val text = if (chapter.isFirst(chapters)) {
+                        "This is the beginning"
+                    } else {
+                        "Previous Chapter"
+                    }
+                    Text(text)
+                }
+            }
             items(pages.toList()) { pageIndex ->
                 val result = pageState[pageIndex]!!
                 ComicPage(
@@ -201,6 +227,22 @@ private fun ComicReaderContent(
                     onLoadPage = onLoadPage,
                     onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture }
                 )
+            }
+            item {
+                TextButton(
+                    onClick = onClickNextChapter,
+                    enabled = !chapter.isLast(chapters)
+                ) {
+                    val text = if (chapter.isLast(chapters)) {
+                        "This is the last chapter"
+                    } else {
+                        "Next Chapter"
+                    }
+                    Text(text)
+                }
+            }
+            item {
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         }
     }
@@ -324,3 +366,6 @@ private fun ComicPage(
         )
     }
 }
+
+private fun Chapter.isFirst(chapters: List<Chapter>) = this == chapters.first()
+private fun Chapter.isLast(chapters: List<Chapter>) = this == chapters.last()
