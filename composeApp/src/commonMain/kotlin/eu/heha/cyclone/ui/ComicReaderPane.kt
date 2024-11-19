@@ -3,6 +3,7 @@ package eu.heha.cyclone.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -26,11 +27,14 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -54,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -87,13 +92,23 @@ fun ComicReaderPane(
     onClickChapter: (Chapter) -> Unit
 ) {
     val (comic, chapters) = comicAndChapters
+    var isChapterSelectionDialogVisible by remember { mutableStateOf(false) }
+    var isChapterHandleVisible by remember { mutableStateOf(false) }
+    var readerStyle by remember { mutableStateOf(ReaderStyle.PAGER) }
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopBar(
                 state = state,
                 comic = comic,
-                onClickBack = onClickBack
+                readerStyle = readerStyle,
+                onClickBack = onClickBack,
+                onClickToggleReaderStyle = {
+                    readerStyle = when (readerStyle) {
+                        ReaderStyle.LIST -> ReaderStyle.PAGER
+                        ReaderStyle.PAGER -> ReaderStyle.LIST
+                    }
+                }
             )
         }
     ) { innerPadding ->
@@ -103,12 +118,11 @@ fun ComicReaderPane(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            var isChapterSelectionDialogVisible by remember { mutableStateOf(false) }
-            var isChapterHandleVisible by remember { mutableStateOf(false) }
             when (state) {
                 ComicReaderViewModel.State.Loading -> CircularProgressIndicator()
                 is Loaded -> if (state.pages != null) {
                     ComicReaderContent(
+                        readerStyle = readerStyle,
                         comic = comic,
                         chapter = state.chapter,
                         chapters = chapters,
@@ -119,7 +133,7 @@ fun ComicReaderPane(
                         onProgress = onProgress,
                         onClickPreviousChapter = onClickPreviousChapter,
                         onClickNextChapter = onClickNextChapter,
-                        onNextChapterButtonVisible = { isChapterHandleVisible = !it }
+                        isChapterHandleVisible = { isChapterHandleVisible = it }
                     )
                     AnimatedVisibility(
                         visible = isChapterHandleVisible,
@@ -173,7 +187,9 @@ fun ComicReaderPane(
 private fun TopBar(
     state: ComicReaderViewModel.State,
     comic: Comic,
-    onClickBack: () -> Unit
+    readerStyle: ReaderStyle,
+    onClickBack: () -> Unit,
+    onClickToggleReaderStyle: () -> Unit
 ) {
     val title = (state as? Loaded)?.chapter?.title ?: comic.title
     CenterAlignedTopAppBar(
@@ -182,10 +198,19 @@ private fun TopBar(
             IconButton(onClick = onClickBack) {
                 Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
             }
+        },
+        actions = {
+            IconButton(onClick = onClickToggleReaderStyle) {
+                val rotation by animateFloatAsState(if (readerStyle == ReaderStyle.LIST) 0f else 90f)
+                Icon(
+                    Icons.Default.Menu,
+                    contentDescription = "Toggle Reader Style",
+                    modifier = Modifier.rotate(rotation)
+                )
+            }
         }
     )
 }
-
 
 @Composable
 private fun ComicReaderError(message: String) {
@@ -194,6 +219,96 @@ private fun ComicReaderError(message: String) {
 
 @Composable
 private fun ComicReaderContent(
+    readerStyle: ReaderStyle,
+    comic: Comic,
+    chapter: Chapter,
+    chapters: List<Chapter>,
+    pages: LongRange,
+    jumpToPage: Long?,
+    pageState: Map<Long, ReaderController.PageResult>,
+    onLoadPage: (Long) -> Unit,
+    onProgress: (Long) -> Unit,
+    onClickPreviousChapter: () -> Unit,
+    onClickNextChapter: () -> Unit,
+    isChapterHandleVisible: (Boolean) -> Unit
+) {
+    when (readerStyle) {
+        ReaderStyle.LIST -> PageReaderList(
+            pages = pages,
+            chapter = chapter,
+            jumpToPage = jumpToPage,
+            onProgress = onProgress,
+            onNextChapterButtonVisible = { isChapterHandleVisible(!it) },
+            onClickPreviousChapter = onClickPreviousChapter,
+            chapters = chapters,
+            pageState = pageState,
+            comic = comic,
+            onLoadPage = onLoadPage,
+            onClickNextChapter = onClickNextChapter
+        )
+
+        ReaderStyle.PAGER -> {
+            LaunchedEffect(chapter) {
+                isChapterHandleVisible(true)
+            }
+            PageReaderPager(
+                comic = comic,
+                chapter = chapter,
+                jumpToPage = jumpToPage,
+                onProgress = onProgress,
+                pageState = pageState,
+                pages = pages,
+                onLoadPage = onLoadPage
+            )
+        }
+    }
+}
+
+@Composable
+private fun PageReaderPager(
+    comic: Comic,
+    chapter: Chapter,
+    pages: LongRange,
+    jumpToPage: Long?,
+    pageState: Map<Long, ReaderController.PageResult>,
+    onLoadPage: (Long) -> Unit,
+    onProgress: (Long) -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        val pagesList = pages.toList()
+        val pagerState = rememberPagerState { pagesList.size }
+        var isScrollingEnabled by remember { mutableStateOf(true) }
+        LaunchedEffect(chapter, jumpToPage) {
+            pagerState.animateScrollToPage(jumpToPage?.toInt() ?: 0)
+        }
+        LaunchedEffect(pagerState.currentPage) {
+            onProgress(pagerState.currentPage.toLong())
+        }
+        HorizontalPager(
+            state = pagerState,
+            beyondViewportPageCount = 2,
+            userScrollEnabled = isScrollingEnabled
+        ) { pagerPageIndex ->
+            val pageIndex = pagesList[pagerPageIndex]
+            val result = pageState[pageIndex]!!
+            ComicPage(
+                comic = comic,
+                chapter = chapter,
+                pageIndex = pageIndex,
+                pageResult = result,
+                onLoadPage = onLoadPage,
+                onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun PageReaderList(
     comic: Comic,
     chapter: Chapter,
     chapters: List<Chapter>,
@@ -260,7 +375,8 @@ private fun ComicReaderContent(
                     pageIndex = pageIndex,
                     pageResult = result,
                     onLoadPage = onLoadPage,
-                    onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture }
+                    onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture },
+                    modifier = Modifier.height(400.dp)
                 )
             }
             item(key = "next_chapter_button") {
@@ -290,7 +406,8 @@ private fun ComicPage(
     pageIndex: Long,
     pageResult: ReaderController.PageResult,
     onLoadPage: (Long) -> Unit,
-    onGestureChanged: (isInGesture: Boolean) -> Unit
+    onGestureChanged: (isInGesture: Boolean) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     //the scale from the zoom gesture
@@ -324,11 +441,10 @@ private fun ComicPage(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .zIndex(zIndex)
             .padding(vertical = 8.dp, horizontal = 16.dp)
-            .height(400.dp)
     ) {
         Box(
             contentAlignment = Alignment.Center,
@@ -495,6 +611,10 @@ private fun ChapterOverview(
             }
         }
     }
+}
+
+private enum class ReaderStyle {
+    LIST, PAGER
 }
 
 private fun Chapter.isFirst(chapters: List<Chapter>) = this == chapters.first()
