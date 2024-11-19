@@ -1,7 +1,10 @@
 package eu.heha.cyclone.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
@@ -68,6 +71,7 @@ import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.ui.ComicReaderViewModel.State.Loaded
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @Composable
@@ -100,6 +104,7 @@ fun ComicReaderPane(
                 .fillMaxSize()
         ) {
             var isChapterSelectionDialogVisible by remember { mutableStateOf(false) }
+            var isChapterHandleVisible by remember { mutableStateOf(false) }
             when (state) {
                 ComicReaderViewModel.State.Loading -> CircularProgressIndicator()
                 is Loaded -> if (state.pages != null) {
@@ -113,16 +118,29 @@ fun ComicReaderPane(
                         onLoadPage = onLoadPage,
                         onProgress = onProgress,
                         onClickPreviousChapter = onClickPreviousChapter,
-                        onClickNextChapter = onClickNextChapter
-                    )
-                    ChapterHandle(
-                        chapter = state.chapter,
-                        chapters = chapters,
-                        onClickPreviousChapter = onClickPreviousChapter,
                         onClickNextChapter = onClickNextChapter,
-                        onClickShowChapters = { isChapterSelectionDialogVisible = true },
-                        modifier = Modifier.align(Alignment.BottomCenter)
+                        onNextChapterButtonVisible = { isChapterHandleVisible = !it }
                     )
+                    AnimatedVisibility(
+                        visible = isChapterHandleVisible,
+                        label = "Chapter Handle Visibility",
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            ChapterHandle(
+                                chapter = state.chapter,
+                                chapters = chapters,
+                                onClickPreviousChapter = onClickPreviousChapter,
+                                onClickNextChapter = onClickNextChapter,
+                                onClickShowChapters = { isChapterSelectionDialogVisible = true }
+                            )
+                        }
+                    }
                 } else {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -185,7 +203,8 @@ private fun ComicReaderContent(
     onLoadPage: (Long) -> Unit,
     onProgress: (Long) -> Unit,
     onClickPreviousChapter: () -> Unit,
-    onClickNextChapter: () -> Unit
+    onClickNextChapter: () -> Unit,
+    onNextChapterButtonVisible: (Boolean) -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -207,6 +226,13 @@ private fun ComicReaderContent(
             snapshotFlow { listState.firstVisibleItemIndex }.collect { index ->
                 onProgress(toPageIndex(index))
             }
+        }
+        LaunchedEffect(chapter, listState) {
+            snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+                .map { visibleItems -> visibleItems.map { it.key } }
+                .collect { visibleKeys ->
+                    onNextChapterButtonVisible("next_chapter_button" in visibleKeys)
+                }
         }
         LazyColumn(
             userScrollEnabled = isScrollingEnabled,
@@ -237,7 +263,7 @@ private fun ComicReaderContent(
                     onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture }
                 )
             }
-            item {
+            item(key = "next_chapter_button") {
                 TextButton(
                     onClick = onClickNextChapter,
                     enabled = !chapter.isLast(chapters)
@@ -387,7 +413,7 @@ private fun ChapterHandle(
 ) {
     Surface(
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.66f),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
         modifier = modifier.padding(32.dp)
     ) {
         Row(
@@ -436,6 +462,10 @@ private fun ChapterOverview(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                val lazyListState = rememberLazyListState()
+                LaunchedEffect(chapter) {
+                    lazyListState.scrollToItem(chapters.indexOf(chapter))
+                }
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "Chapter Overview",
@@ -443,6 +473,7 @@ private fun ChapterOverview(
                 )
                 Spacer(Modifier.height(4.dp))
                 LazyColumn(
+                    state = lazyListState,
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxHeight(0.8f)
                 ) {
