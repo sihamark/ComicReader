@@ -146,7 +146,7 @@ android {
 
 compose.desktop {
     application {
-        mainClass = "eu.heha.cyclone.CycloneMainKt"
+        mainClass = "eu.heha.cyclone.Cyclone"
 
         nativeDistributions {
             modules("java.sql")
