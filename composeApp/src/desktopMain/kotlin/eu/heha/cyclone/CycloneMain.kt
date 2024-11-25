@@ -1,3 +1,5 @@
+@file:JvmName("Cyclone")
+
 package eu.heha.cyclone
 
 import androidx.compose.ui.window.application

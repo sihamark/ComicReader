@@ -1,25 +1,42 @@
 package eu.heha.cyclone.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,7 +44,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -39,9 +58,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -55,6 +76,7 @@ import eu.heha.cyclone.model.ComicAndChapters
 import eu.heha.cyclone.model.ReaderController
 import eu.heha.cyclone.model.RemoteSource.Companion.addComicHeader
 import eu.heha.cyclone.ui.ComicReaderViewModel.State.Loaded
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @Composable
@@ -66,19 +88,27 @@ fun ComicReaderPane(
     onProgress: (Long) -> Unit,
     onClickBack: () -> Unit,
     onClickPreviousChapter: () -> Unit,
-    onClickNextChapter: () -> Unit
+    onClickNextChapter: () -> Unit,
+    onClickChapter: (Chapter) -> Unit
 ) {
     val (comic, chapters) = comicAndChapters
+    var isChapterSelectionDialogVisible by remember { mutableStateOf(false) }
+    var isChapterHandleVisible by remember { mutableStateOf(false) }
+    var readerStyle by remember { mutableStateOf(ReaderStyle.PAGER) }
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopBar(
                 state = state,
                 comic = comic,
-                chapters = chapters,
+                readerStyle = readerStyle,
                 onClickBack = onClickBack,
-                onClickPreviousChapter = onClickPreviousChapter,
-                onClickNextChapter = onClickNextChapter
+                onClickToggleReaderStyle = {
+                    readerStyle = when (readerStyle) {
+                        ReaderStyle.LIST -> ReaderStyle.PAGER
+                        ReaderStyle.PAGER -> ReaderStyle.LIST
+                    }
+                }
             )
         }
     ) { innerPadding ->
@@ -92,14 +122,39 @@ fun ComicReaderPane(
                 ComicReaderViewModel.State.Loading -> CircularProgressIndicator()
                 is Loaded -> if (state.pages != null) {
                     ComicReaderContent(
+                        readerStyle = readerStyle,
                         comic = comic,
                         chapter = state.chapter,
+                        chapters = chapters,
                         pages = state.pages,
                         jumpToPage = state.jumpToPage,
                         pageState = pageState,
                         onLoadPage = onLoadPage,
-                        onProgress = onProgress
+                        onProgress = onProgress,
+                        onClickPreviousChapter = onClickPreviousChapter,
+                        onClickNextChapter = onClickNextChapter,
+                        isChapterHandleVisible = { isChapterHandleVisible = it }
                     )
+                    AnimatedVisibility(
+                        visible = isChapterHandleVisible,
+                        label = "Chapter Handle Visibility",
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            ChapterHandle(
+                                chapter = state.chapter,
+                                chapters = chapters,
+                                onClickPreviousChapter = onClickPreviousChapter,
+                                onClickNextChapter = onClickNextChapter,
+                                onClickShowChapters = { isChapterSelectionDialogVisible = true }
+                            )
+                        }
+                    }
                 } else {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -111,6 +166,18 @@ fun ComicReaderPane(
 
                 is ComicReaderViewModel.State.Error -> ComicReaderError(state.message)
             }
+
+            if (isChapterSelectionDialogVisible && state is Loaded) {
+                ChapterOverview(
+                    chapter = state.chapter,
+                    chapters = chapters,
+                    onDismissRequest = { isChapterSelectionDialogVisible = false },
+                    onClickChapter = { chapter ->
+                        isChapterSelectionDialogVisible = false
+                        onClickChapter(chapter)
+                    }
+                )
+            }
         }
     }
 }
@@ -120,10 +187,9 @@ fun ComicReaderPane(
 private fun TopBar(
     state: ComicReaderViewModel.State,
     comic: Comic,
-    chapters: List<Chapter>,
+    readerStyle: ReaderStyle,
     onClickBack: () -> Unit,
-    onClickPreviousChapter: () -> Unit,
-    onClickNextChapter: () -> Unit
+    onClickToggleReaderStyle: () -> Unit
 ) {
     val title = (state as? Loaded)?.chapter?.title ?: comic.title
     CenterAlignedTopAppBar(
@@ -134,19 +200,13 @@ private fun TopBar(
             }
         },
         actions = {
-            if (state is Loaded) {
-                IconButton(
-                    enabled = chapters.first() != state.chapter,
-                    onClick = onClickPreviousChapter
-                ) {
-                    Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Chapter")
-                }
-                IconButton(
-                    enabled = chapters.last() != state.chapter,
-                    onClick = onClickNextChapter
-                ) {
-                    Icon(Icons.Default.ChevronRight, contentDescription = "Next Chapter")
-                }
+            IconButton(onClick = onClickToggleReaderStyle) {
+                val rotation by animateFloatAsState(if (readerStyle == ReaderStyle.LIST) 0f else 90f)
+                Icon(
+                    Icons.Default.Menu,
+                    contentDescription = "Toggle Reader Style",
+                    modifier = Modifier.rotate(rotation)
+                )
             }
         }
     )
@@ -159,6 +219,53 @@ private fun ComicReaderError(message: String) {
 
 @Composable
 private fun ComicReaderContent(
+    readerStyle: ReaderStyle,
+    comic: Comic,
+    chapter: Chapter,
+    chapters: List<Chapter>,
+    pages: LongRange,
+    jumpToPage: Long?,
+    pageState: Map<Long, ReaderController.PageResult>,
+    onLoadPage: (Long) -> Unit,
+    onProgress: (Long) -> Unit,
+    onClickPreviousChapter: () -> Unit,
+    onClickNextChapter: () -> Unit,
+    isChapterHandleVisible: (Boolean) -> Unit
+) {
+    when (readerStyle) {
+        ReaderStyle.LIST -> PageReaderList(
+            pages = pages,
+            chapter = chapter,
+            jumpToPage = jumpToPage,
+            onProgress = onProgress,
+            onNextChapterButtonVisible = { isChapterHandleVisible(!it) },
+            onClickPreviousChapter = onClickPreviousChapter,
+            chapters = chapters,
+            pageState = pageState,
+            comic = comic,
+            onLoadPage = onLoadPage,
+            onClickNextChapter = onClickNextChapter
+        )
+
+        ReaderStyle.PAGER -> {
+            LaunchedEffect(chapter) {
+                isChapterHandleVisible(true)
+            }
+            PageReaderPager(
+                comic = comic,
+                chapter = chapter,
+                jumpToPage = jumpToPage,
+                onProgress = onProgress,
+                pageState = pageState,
+                pages = pages,
+                onLoadPage = onLoadPage
+            )
+        }
+    }
+}
+
+@Composable
+private fun PageReaderPager(
     comic: Comic,
     chapter: Chapter,
     pages: LongRange,
@@ -171,26 +278,95 @@ private fun ComicReaderContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
+        val pagesList = pages.toList()
+        val pagerState = rememberPagerState { pagesList.size }
+        var isScrollingEnabled by remember { mutableStateOf(true) }
+        LaunchedEffect(chapter, jumpToPage) {
+            pagerState.animateScrollToPage(jumpToPage?.toInt() ?: 0)
+        }
+        LaunchedEffect(pagerState.currentPage) {
+            onProgress(pagerState.currentPage.toLong())
+        }
+        HorizontalPager(
+            state = pagerState,
+            beyondViewportPageCount = 2,
+            userScrollEnabled = isScrollingEnabled
+        ) { pagerPageIndex ->
+            val pageIndex = pagesList[pagerPageIndex]
+            val result = pageState[pageIndex]!!
+            ComicPage(
+                comic = comic,
+                chapter = chapter,
+                pageIndex = pageIndex,
+                pageResult = result,
+                onLoadPage = onLoadPage,
+                onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun PageReaderList(
+    comic: Comic,
+    chapter: Chapter,
+    chapters: List<Chapter>,
+    pages: LongRange,
+    jumpToPage: Long?,
+    pageState: Map<Long, ReaderController.PageResult>,
+    onLoadPage: (Long) -> Unit,
+    onProgress: (Long) -> Unit,
+    onClickPreviousChapter: () -> Unit,
+    onClickNextChapter: () -> Unit,
+    onNextChapterButtonVisible: (Boolean) -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
         var isScrollingEnabled by remember { mutableStateOf(true) }
         val listState = rememberLazyListState()
+
+        // +1 for the previous chapter button
+        fun toListIndex(page: Long) = (page - pages.first).toInt() + 1
+
+        // -1 for the previous chapter button
+        fun toPageIndex(index: Int) = ((pages.first + index) - 1).coerceAtMost(pages.last)
+
         LaunchedEffect(chapter, jumpToPage) {
-            if (jumpToPage != null) {
-                listState.scrollToItem((jumpToPage - pages.first).toInt())
-            } else {
-                listState.scrollToItem(0)
-            }
+            listState.scrollToItem(toListIndex(jumpToPage ?: pages.first))
         }
         LaunchedEffect(chapter, listState) {
             snapshotFlow { listState.firstVisibleItemIndex }.collect { index ->
-                val page = pages.first + index
-                onProgress(page)
+                onProgress(toPageIndex(index))
             }
+        }
+        LaunchedEffect(chapter, listState) {
+            snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+                .map { visibleItems -> visibleItems.map { it.key } }
+                .collect { visibleKeys ->
+                    onNextChapterButtonVisible("next_chapter_button" in visibleKeys)
+                }
         }
         LazyColumn(
             userScrollEnabled = isScrollingEnabled,
             horizontalAlignment = Alignment.CenterHorizontally,
             state = listState
         ) {
+            item {
+                TextButton(
+                    onClick = onClickPreviousChapter,
+                    enabled = !chapter.isFirst(chapters)
+                ) {
+                    val text = if (chapter.isFirst(chapters)) {
+                        "This is the beginning"
+                    } else {
+                        "Previous Chapter"
+                    }
+                    Text(text)
+                }
+            }
             items(pages.toList()) { pageIndex ->
                 val result = pageState[pageIndex]!!
                 ComicPage(
@@ -199,8 +375,25 @@ private fun ComicReaderContent(
                     pageIndex = pageIndex,
                     pageResult = result,
                     onLoadPage = onLoadPage,
-                    onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture }
+                    onGestureChanged = { isInGesture -> isScrollingEnabled = !isInGesture },
+                    modifier = Modifier.height(400.dp)
                 )
+            }
+            item(key = "next_chapter_button") {
+                TextButton(
+                    onClick = onClickNextChapter,
+                    enabled = !chapter.isLast(chapters)
+                ) {
+                    val text = if (chapter.isLast(chapters)) {
+                        "This is the last chapter"
+                    } else {
+                        "Next Chapter"
+                    }
+                    Text(text)
+                }
+            }
+            item {
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         }
     }
@@ -213,7 +406,8 @@ private fun ComicPage(
     pageIndex: Long,
     pageResult: ReaderController.PageResult,
     onLoadPage: (Long) -> Unit,
-    onGestureChanged: (isInGesture: Boolean) -> Unit
+    onGestureChanged: (isInGesture: Boolean) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     //the scale from the zoom gesture
@@ -247,11 +441,10 @@ private fun ComicPage(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .zIndex(zIndex)
             .padding(vertical = 8.dp, horizontal = 16.dp)
-            .height(400.dp)
     ) {
         Box(
             contentAlignment = Alignment.Center,
@@ -324,3 +517,105 @@ private fun ComicPage(
         )
     }
 }
+
+@Composable
+private fun ChapterHandle(
+    chapter: Chapter,
+    chapters: List<Chapter>,
+    onClickPreviousChapter: () -> Unit,
+    onClickNextChapter: () -> Unit,
+    onClickShowChapters: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+        modifier = modifier.padding(32.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(8.dp)
+        ) {
+            IconButton(
+                onClick = onClickPreviousChapter,
+                enabled = !chapter.isFirst(chapters)
+            ) {
+                Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Chapter")
+            }
+            Spacer(Modifier.width(8.dp))
+            IconButton(
+                onClick = onClickShowChapters
+            ) {
+                Icon(Icons.AutoMirrored.Default.ManageSearch, contentDescription = "Show Chapters")
+            }
+            Spacer(Modifier.width(8.dp))
+            IconButton(
+                onClick = onClickNextChapter,
+                enabled = !chapter.isLast(chapters)
+            ) {
+                Icon(Icons.Default.ChevronRight, contentDescription = "Next Chapter")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChapterOverview(
+    chapter: Chapter,
+    chapters: List<Chapter>,
+    onDismissRequest: () -> Unit,
+    onClickChapter: (Chapter) -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = onDismissRequest
+    ) {
+        Surface(
+            shape = AlertDialogDefaults.shape,
+            color = AlertDialogDefaults.containerColor
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                val lazyListState = rememberLazyListState()
+                LaunchedEffect(chapter) {
+                    lazyListState.scrollToItem(chapters.indexOf(chapter))
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Chapter Overview",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Spacer(Modifier.height(4.dp))
+                LazyColumn(
+                    state = lazyListState,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxHeight(0.8f)
+                ) {
+                    items(chapters) { chapterIndex ->
+                        TextButton(
+                            onClick = { onClickChapter(chapterIndex) },
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        ) {
+                            Text(
+                                chapterIndex.title,
+                                fontWeight = if (chapterIndex == chapter) FontWeight.Bold else null
+                            )
+                        }
+                    }
+                    item {
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private enum class ReaderStyle {
+    LIST, PAGER
+}
+
+private fun Chapter.isFirst(chapters: List<Chapter>) = this == chapters.first()
+private fun Chapter.isLast(chapters: List<Chapter>) = this == chapters.last()
